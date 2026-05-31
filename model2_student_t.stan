@@ -1,43 +1,68 @@
-// Model 2: Student-t Linear Regression for Race Finish Times (Robust)
-// y ~ Student_t(nu, mu, sigma)
-// mu = alpha + beta_dist * distance_std + beta_elev * elevation_std
-// The Student-t likelihood is more robust to outlier races
+// Model 2: Student-t Linear Regression on LOG finish time (robust)
+// log(T_i) ~ student_t(nu, mu_i, sigma)
+// mu_i = alpha + beta_dist * distance_log_std
+//              + beta_elev * elevation_log_std
+//              + beta_steep * steepness_std
+//
+// The Student-t likelihood on the log scale is robust to outlier races
+// (technical terrain, extreme weather, data errors, atypical profiles).
+// Modelling log_time keeps back-transformed predictions positive.
 
 data {
   int<lower=1> N;
-  vector[N] y;              // finish time in hours
-  vector[N] distance_std;   // standardized distance
-  vector[N] elevation_std;  // standardized elevation gain
+  vector[N] log_time;            // log(mean finish time [hours])
+  vector[N] distance_log_std;    // standardized log-distance
+  vector[N] elevation_log_std;   // standardized log-elevation
+  vector[N] steepness_std;       // standardized steepness (elevation gain per km)
 }
 
 parameters {
-  real alpha;               // intercept
-  real beta_dist;           // effect of distance
-  real beta_elev;           // effect of elevation gain
-  real<lower=0.01> sigma;   // scale parameter (lower-bounded to avoid numerical issues)
-  real<lower=1> nu;         // degrees of freedom (controls tail heaviness)
+  real alpha;
+  real beta_dist;
+  real beta_elev;
+  real beta_steep;
+  real<lower=0> sigma;            // scale on the log scale
+  real<lower=0> nu_minus_two;     // reparameterization to enforce nu > 2
+}
+
+transformed parameters {
+  real<lower=2> nu = 2 + nu_minus_two;   // finite-variance Student-t
 }
 
 model {
-  // Priors
-  alpha ~ normal(10, 5);           // average finish time ~10h
-  beta_dist ~ normal(5, 3);       // longer distance -> longer time
-  beta_elev ~ normal(2, 2);       // more elevation -> longer time
-  sigma ~ exponential(0.2);        // scale parameter
-  nu ~ gamma(2, 0.1);             // degrees of freedom, allows heavy tails
+  vector[N] mu = alpha
+               + beta_dist  * distance_log_std
+               + beta_elev  * elevation_log_std
+               + beta_steep * steepness_std;
 
-  // Likelihood (Student-t for robustness against outliers)
-  y ~ student_t(nu, alpha + beta_dist * distance_std + beta_elev * elevation_std, sigma);
+  // Priors on the log-time scale
+  alpha        ~ normal(log(10), 0.5);
+  beta_dist    ~ normal(0.6, 0.3);
+  beta_elev    ~ normal(0.2, 0.25);
+  beta_steep   ~ normal(0.15, 0.25);
+  sigma        ~ normal(0, 0.35);    // half-normal (sigma > 0)
+  nu_minus_two ~ gamma(2, 0.1);      // mean ~ 20 (nu mean ~ 22), little mass near 2 -> lighter tails
+
+  // Robust likelihood on the LOG scale
+  log_time ~ student_t(nu, mu, sigma);
 }
 
 generated quantities {
-  vector[N] y_rep;
-  vector[N] log_lik;
   vector[N] mu;
+  vector[N] log_time_rep;
+  vector[N] time_rep;
+  vector[N] time_mu;
+  vector[N] log_lik;
 
   for (i in 1:N) {
-    mu[i] = alpha + beta_dist * distance_std[i] + beta_elev * elevation_std[i];
-    y_rep[i] = student_t_rng(nu, mu[i], sigma);
-    log_lik[i] = student_t_lpdf(y[i] | nu, mu[i], sigma);
+    mu[i] = alpha
+            + beta_dist  * distance_log_std[i]
+            + beta_elev  * elevation_log_std[i]
+            + beta_steep * steepness_std[i];
+
+    log_time_rep[i] = student_t_rng(nu, mu[i], sigma);
+    time_rep[i]     = exp(log_time_rep[i]);   // always > 0
+    time_mu[i]      = exp(mu[i]);
+    log_lik[i]      = student_t_lpdf(log_time[i] | nu, mu[i], sigma);
   }
 }
