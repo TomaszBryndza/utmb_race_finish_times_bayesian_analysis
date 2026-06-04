@@ -8,38 +8,42 @@ using namespace stan::math;
 
 
 stan::math::profile_map profiles__;
-static constexpr std::array<const char*, 31> locations_array__ = 
+static constexpr std::array<const char*, 35> locations_array__ = 
 {" (found before start of program)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 18, column 2 to column 13)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 19, column 2 to column 17)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 20, column 2 to column 17)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 21, column 2 to column 18)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 22, column 2 to column 22)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 23, column 2 to column 19)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 25, column 2 to column 15)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 26, column 2 to column 25)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 27, column 2 to column 21)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 30, column 2 to column 35)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 31, column 2 to column 35)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 32, column 2 to column 36)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 33, column 2 to column 38)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 34, column 2 to column 36)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 35, column 2 to column 29)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 38, column 4 to line 41, column 44)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 43, column 4 to column 54)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 44, column 4 to column 39)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 37, column 17 to line 45, column 3)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 37, column 2 to line 45, column 3)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 11, column 2 to column 17)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 12, column 9 to column 10)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 12, column 2 to column 29)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 13, column 9 to column 10)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 13, column 2 to column 30)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 21, column 2 to column 13)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 22, column 2 to column 17)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 23, column 2 to column 17)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 24, column 2 to column 18)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 25, column 2 to column 16)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 26, column 2 to column 22)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 27, column 2 to column 19)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 29, column 2 to column 15)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 30, column 2 to column 25)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 31, column 2 to column 21)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 33, column 2 to column 37)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 34, column 2 to column 37)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 35, column 2 to column 37)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 36, column 2 to column 37)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 37, column 2 to column 37)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 38, column 2 to column 40)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 39, column 2 to column 37)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 42, column 4 to line 46, column 43)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 48, column 4 to column 54)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 49, column 4 to column 43)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 41, column 17 to line 50, column 3)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 41, column 2 to line 50, column 3)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 13, column 2 to column 17)",
  " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 14, column 9 to column 10)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 14, column 2 to column 26)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 25, column 9 to column 10)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 26, column 9 to column 10)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 27, column 9 to column 10)"};
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 14, column 2 to column 29)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 15, column 9 to column 10)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 15, column 2 to column 30)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 16, column 9 to column 10)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 16, column 2 to column 26)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 17, column 9 to column 10)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 17, column 2 to column 25)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 29, column 9 to column 10)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 30, column 9 to column 10)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 31, column 9 to column 10)"};
 
 
 
@@ -50,10 +54,12 @@ class prior_predictive_model final : public model_base_crtp<prior_predictive_mod
   int N;
   Eigen::Matrix<double, -1, 1> distance_log_std__;
   Eigen::Matrix<double, -1, 1> elevation_log_std__;
-  Eigen::Matrix<double, -1, 1> steepness_std__; 
+  Eigen::Matrix<double, -1, 1> steepness_std__;
+  Eigen::Matrix<double, -1, 1> altitude_std__; 
   Eigen::Map<Eigen::Matrix<double, -1, 1>> distance_log_std{nullptr, 0};
   Eigen::Map<Eigen::Matrix<double, -1, 1>> elevation_log_std{nullptr, 0};
   Eigen::Map<Eigen::Matrix<double, -1, 1>> steepness_std{nullptr, 0};
+  Eigen::Map<Eigen::Matrix<double, -1, 1>> altitude_std{nullptr, 0};
  
  public:
   ~prior_predictive_model() { }
@@ -80,19 +86,19 @@ class prior_predictive_model final : public model_base_crtp<prior_predictive_mod
     try {
       int pos__ = std::numeric_limits<int>::min();
       pos__ = 1;
-      current_statement__ = 21;
+      current_statement__ = 23;
       context__.validate_dims("data initialization","N","int",
            std::vector<size_t>{});
       N = std::numeric_limits<int>::min();
       
       
-      current_statement__ = 21;
-      N = context__.vals_i("N")[(1 - 1)];
-      current_statement__ = 21;
-      stan::math::check_greater_or_equal(function__, "N", N, 1);
-      current_statement__ = 22;
-      stan::math::validate_non_negative_index("distance_log_std", "N", N);
       current_statement__ = 23;
+      N = context__.vals_i("N")[(1 - 1)];
+      current_statement__ = 23;
+      stan::math::check_greater_or_equal(function__, "N", N, 1);
+      current_statement__ = 24;
+      stan::math::validate_non_negative_index("distance_log_std", "N", N);
+      current_statement__ = 25;
       context__.validate_dims("data initialization","distance_log_std",
           "double", std::vector<size_t>{static_cast<size_t>(N)});
       distance_log_std__ = 
@@ -103,23 +109,23 @@ class prior_predictive_model final : public model_base_crtp<prior_predictive_mod
       
       {
         std::vector<local_scalar_t__> distance_log_std_flat__;
-        current_statement__ = 23;
+        current_statement__ = 25;
         distance_log_std_flat__ = context__.vals_r("distance_log_std");
-        current_statement__ = 23;
+        current_statement__ = 25;
         pos__ = 1;
-        current_statement__ = 23;
+        current_statement__ = 25;
         for (int sym1__ = 1; sym1__ <= N; ++sym1__) {
-          current_statement__ = 23;
+          current_statement__ = 25;
           stan::model::assign(distance_log_std,
             distance_log_std_flat__[(pos__ - 1)],
             "assigning variable distance_log_std", stan::model::index_uni(sym1__));
-          current_statement__ = 23;
+          current_statement__ = 25;
           pos__ = (pos__ + 1);
         }
       }
-      current_statement__ = 24;
+      current_statement__ = 26;
       stan::math::validate_non_negative_index("elevation_log_std", "N", N);
-      current_statement__ = 25;
+      current_statement__ = 27;
       context__.validate_dims("data initialization","elevation_log_std",
           "double", std::vector<size_t>{static_cast<size_t>(N)});
       elevation_log_std__ = 
@@ -130,23 +136,23 @@ class prior_predictive_model final : public model_base_crtp<prior_predictive_mod
       
       {
         std::vector<local_scalar_t__> elevation_log_std_flat__;
-        current_statement__ = 25;
+        current_statement__ = 27;
         elevation_log_std_flat__ = context__.vals_r("elevation_log_std");
-        current_statement__ = 25;
+        current_statement__ = 27;
         pos__ = 1;
-        current_statement__ = 25;
+        current_statement__ = 27;
         for (int sym1__ = 1; sym1__ <= N; ++sym1__) {
-          current_statement__ = 25;
+          current_statement__ = 27;
           stan::model::assign(elevation_log_std,
             elevation_log_std_flat__[(pos__ - 1)],
             "assigning variable elevation_log_std", stan::model::index_uni(sym1__));
-          current_statement__ = 25;
+          current_statement__ = 27;
           pos__ = (pos__ + 1);
         }
       }
-      current_statement__ = 26;
+      current_statement__ = 28;
       stan::math::validate_non_negative_index("steepness_std", "N", N);
-      current_statement__ = 27;
+      current_statement__ = 29;
       context__.validate_dims("data initialization","steepness_std","double",
            std::vector<size_t>{static_cast<size_t>(N)});
       steepness_std__ = 
@@ -157,25 +163,51 @@ class prior_predictive_model final : public model_base_crtp<prior_predictive_mod
       
       {
         std::vector<local_scalar_t__> steepness_std_flat__;
-        current_statement__ = 27;
+        current_statement__ = 29;
         steepness_std_flat__ = context__.vals_r("steepness_std");
-        current_statement__ = 27;
+        current_statement__ = 29;
         pos__ = 1;
-        current_statement__ = 27;
+        current_statement__ = 29;
         for (int sym1__ = 1; sym1__ <= N; ++sym1__) {
-          current_statement__ = 27;
+          current_statement__ = 29;
           stan::model::assign(steepness_std,
             steepness_std_flat__[(pos__ - 1)],
             "assigning variable steepness_std", stan::model::index_uni(sym1__));
-          current_statement__ = 27;
+          current_statement__ = 29;
           pos__ = (pos__ + 1);
         }
       }
-      current_statement__ = 28;
-      stan::math::validate_non_negative_index("mu", "N", N);
-      current_statement__ = 29;
-      stan::math::validate_non_negative_index("log_time_rep", "N", N);
       current_statement__ = 30;
+      stan::math::validate_non_negative_index("altitude_std", "N", N);
+      current_statement__ = 31;
+      context__.validate_dims("data initialization","altitude_std","double",
+           std::vector<size_t>{static_cast<size_t>(N)});
+      altitude_std__ = 
+        Eigen::Matrix<double, -1, 1>::Constant(N,
+          std::numeric_limits<double>::quiet_NaN());
+      new (&altitude_std) Eigen::Map<Eigen::Matrix<double, -1, 1>>(altitude_std__.data(), N);
+        
+      
+      {
+        std::vector<local_scalar_t__> altitude_std_flat__;
+        current_statement__ = 31;
+        altitude_std_flat__ = context__.vals_r("altitude_std");
+        current_statement__ = 31;
+        pos__ = 1;
+        current_statement__ = 31;
+        for (int sym1__ = 1; sym1__ <= N; ++sym1__) {
+          current_statement__ = 31;
+          stan::model::assign(altitude_std, altitude_std_flat__[(pos__ - 1)],
+            "assigning variable altitude_std", stan::model::index_uni(sym1__));
+          current_statement__ = 31;
+          pos__ = (pos__ + 1);
+        }
+      }
+      current_statement__ = 32;
+      stan::math::validate_non_negative_index("mu", "N", N);
+      current_statement__ = 33;
+      stan::math::validate_non_negative_index("log_time_rep", "N", N);
+      current_statement__ = 34;
       stan::math::validate_non_negative_index("time_rep", "N", N);
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);
@@ -247,6 +279,7 @@ class prior_predictive_model final : public model_base_crtp<prior_predictive_mod
       double beta_dist = std::numeric_limits<double>::quiet_NaN();
       double beta_elev = std::numeric_limits<double>::quiet_NaN();
       double beta_steep = std::numeric_limits<double>::quiet_NaN();
+      double beta_alt = std::numeric_limits<double>::quiet_NaN();
       double sigma = std::numeric_limits<double>::quiet_NaN();
       double nu = std::numeric_limits<double>::quiet_NaN();
       Eigen::Matrix<double, -1, 1> mu =
@@ -258,54 +291,60 @@ class prior_predictive_model final : public model_base_crtp<prior_predictive_mod
       Eigen::Matrix<double, -1, 1> time_rep =
          Eigen::Matrix<double, -1, 1>::Constant(N,
            std::numeric_limits<double>::quiet_NaN());
-      current_statement__ = 10;
-      alpha = stan::math::normal_rng(stan::math::log(10), 0.5, base_rng__);
       current_statement__ = 11;
-      beta_dist = stan::math::normal_rng(0.6, 0.3, base_rng__);
+      alpha = stan::math::normal_rng(0, 1.0, base_rng__);
       current_statement__ = 12;
-      beta_elev = stan::math::normal_rng(0.2, 0.25, base_rng__);
+      beta_dist = stan::math::normal_rng(0.7, 0.4, base_rng__);
       current_statement__ = 13;
-      beta_steep = stan::math::normal_rng(0.15, 0.25, base_rng__);
+      beta_elev = stan::math::normal_rng(0.2, 0.3, base_rng__);
       current_statement__ = 14;
-      sigma = stan::math::fabs(stan::math::normal_rng(0, 0.35, base_rng__));
+      beta_steep = stan::math::normal_rng(0.15, 0.2, base_rng__);
       current_statement__ = 15;
+      beta_alt = stan::math::normal_rng(0.05, 0.1, base_rng__);
+      current_statement__ = 16;
+      sigma = stan::math::fabs(stan::math::normal_rng(0, 0.3, base_rng__));
+      current_statement__ = 17;
       nu = (2 + stan::math::gamma_rng(2, 0.1, base_rng__));
-      current_statement__ = 20;
+      current_statement__ = 22;
       for (int i = 1; i <= N; ++i) {
-        current_statement__ = 16;
+        current_statement__ = 18;
         stan::model::assign(mu,
-          (((alpha +
-              (beta_dist *
-                stan::model::rvalue(distance_log_std, "distance_log_std",
+          ((((alpha +
+               (beta_dist *
+                 stan::model::rvalue(distance_log_std, "distance_log_std",
+                   stan::model::index_uni(i)))) +
+              (beta_elev *
+                stan::model::rvalue(elevation_log_std, "elevation_log_std",
                   stan::model::index_uni(i)))) +
-             (beta_elev *
-               stan::model::rvalue(elevation_log_std, "elevation_log_std",
+             (beta_steep *
+               stan::model::rvalue(steepness_std, "steepness_std",
                  stan::model::index_uni(i)))) +
-            (beta_steep *
-              stan::model::rvalue(steepness_std, "steepness_std",
+            (beta_alt *
+              stan::model::rvalue(altitude_std, "altitude_std",
                 stan::model::index_uni(i)))),
           "assigning variable mu", stan::model::index_uni(i));
-        current_statement__ = 17;
+        current_statement__ = 19;
         stan::model::assign(log_time_rep,
           stan::math::student_t_rng(nu,
             stan::model::rvalue(mu, "mu", stan::model::index_uni(i)), sigma,
             base_rng__),
           "assigning variable log_time_rep", stan::model::index_uni(i));
-        current_statement__ = 18;
+        current_statement__ = 20;
         stan::model::assign(time_rep,
           stan::math::exp(
             stan::model::rvalue(log_time_rep, "log_time_rep",
               stan::model::index_uni(i))),
           "assigning variable time_rep", stan::model::index_uni(i));
       }
-      current_statement__ = 5;
-      stan::math::check_greater_or_equal(function__, "sigma", sigma, 0);
       current_statement__ = 6;
+      stan::math::check_greater_or_equal(function__, "sigma", sigma, 0);
+      current_statement__ = 7;
       stan::math::check_greater_or_equal(function__, "nu", nu, 2);
       out__.write(alpha);
       out__.write(beta_dist);
       out__.write(beta_elev);
       out__.write(beta_steep);
+      out__.write(beta_alt);
       out__.write(sigma);
       out__.write(nu);
       out__.write(mu);
@@ -339,7 +378,8 @@ class prior_predictive_model final : public model_base_crtp<prior_predictive_mod
   inline void get_param_names(std::vector<std::string>& names__) const {
     
     names__ = std::vector<std::string>{"alpha", "beta_dist", "beta_elev",
-      "beta_steep", "sigma", "nu", "mu", "log_time_rep", "time_rep"};
+      "beta_steep", "beta_alt", "sigma", "nu", "mu", "log_time_rep",
+      "time_rep"};
     
     } // get_param_names() 
     
@@ -347,8 +387,8 @@ class prior_predictive_model final : public model_base_crtp<prior_predictive_mod
     
     dimss__ = std::vector<std::vector<size_t>>{std::vector<size_t>{},
       std::vector<size_t>{}, std::vector<size_t>{}, std::vector<size_t>{
-      }, std::vector<size_t>{}, std::vector<size_t>{},
-      std::vector<size_t>{static_cast<size_t>(N)},
+      }, std::vector<size_t>{}, std::vector<size_t>{}, std::vector<size_t>{
+      }, std::vector<size_t>{static_cast<size_t>(N)},
       std::vector<size_t>{static_cast<size_t>(N)},
       std::vector<size_t>{static_cast<size_t>(N)}};
     
@@ -370,6 +410,7 @@ class prior_predictive_model final : public model_base_crtp<prior_predictive_mod
       param_names__.emplace_back(std::string() + "beta_dist");
       param_names__.emplace_back(std::string() + "beta_elev");
       param_names__.emplace_back(std::string() + "beta_steep");
+      param_names__.emplace_back(std::string() + "beta_alt");
       param_names__.emplace_back(std::string() + "sigma");
       param_names__.emplace_back(std::string() + "nu");
       for (int sym1__ = 1; sym1__ <= N; ++sym1__) {
@@ -407,6 +448,7 @@ class prior_predictive_model final : public model_base_crtp<prior_predictive_mod
       param_names__.emplace_back(std::string() + "beta_dist");
       param_names__.emplace_back(std::string() + "beta_elev");
       param_names__.emplace_back(std::string() + "beta_steep");
+      param_names__.emplace_back(std::string() + "beta_alt");
       param_names__.emplace_back(std::string() + "sigma");
       param_names__.emplace_back(std::string() + "nu");
       for (int sym1__ = 1; sym1__ <= N; ++sym1__) {
@@ -430,13 +472,13 @@ class prior_predictive_model final : public model_base_crtp<prior_predictive_mod
     
   inline std::string get_constrained_sizedtypes() const {
     
-    return std::string("[{\"name\":\"alpha\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"beta_dist\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"beta_elev\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"beta_steep\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"sigma\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"nu\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"mu\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N) + "},\"block\":\"generated_quantities\"},{\"name\":\"log_time_rep\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N) + "},\"block\":\"generated_quantities\"},{\"name\":\"time_rep\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N) + "},\"block\":\"generated_quantities\"}]");
+    return std::string("[{\"name\":\"alpha\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"beta_dist\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"beta_elev\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"beta_steep\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"beta_alt\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"sigma\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"nu\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"mu\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N) + "},\"block\":\"generated_quantities\"},{\"name\":\"log_time_rep\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N) + "},\"block\":\"generated_quantities\"},{\"name\":\"time_rep\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N) + "},\"block\":\"generated_quantities\"}]");
     
     } // get_constrained_sizedtypes() 
     
   inline std::string get_unconstrained_sizedtypes() const {
     
-    return std::string("[{\"name\":\"alpha\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"beta_dist\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"beta_elev\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"beta_steep\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"sigma\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"nu\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"mu\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N) + "},\"block\":\"generated_quantities\"},{\"name\":\"log_time_rep\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N) + "},\"block\":\"generated_quantities\"},{\"name\":\"time_rep\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N) + "},\"block\":\"generated_quantities\"}]");
+    return std::string("[{\"name\":\"alpha\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"beta_dist\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"beta_elev\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"beta_steep\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"beta_alt\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"sigma\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"nu\",\"type\":{\"name\":\"real\"},\"block\":\"generated_quantities\"},{\"name\":\"mu\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N) + "},\"block\":\"generated_quantities\"},{\"name\":\"log_time_rep\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N) + "},\"block\":\"generated_quantities\"},{\"name\":\"time_rep\",\"type\":{\"name\":\"vector\",\"length\":" + std::to_string(N) + "},\"block\":\"generated_quantities\"}]");
     
     } // get_unconstrained_sizedtypes() 
     
@@ -452,7 +494,7 @@ class prior_predictive_model final : public model_base_crtp<prior_predictive_mod
       const size_t num_params__ = 0;
       const size_t num_transformed = 0;
       const size_t num_gen_quantities = 
-  ((((((((1 + 1) + 1) + 1) + 1) + 1) + N) + N) + N);
+  (((((((((1 + 1) + 1) + 1) + 1) + 1) + 1) + N) + N) + N);
       std::vector<double> vars_vec(num_params__
        + (emit_transformed_parameters * num_transformed)
        + (emit_generated_quantities * num_gen_quantities));
@@ -473,7 +515,7 @@ class prior_predictive_model final : public model_base_crtp<prior_predictive_mod
       const size_t num_params__ = 0;
       const size_t num_transformed = 0;
       const size_t num_gen_quantities = 
-  ((((((((1 + 1) + 1) + 1) + 1) + 1) + N) + N) + N);
+  (((((((((1 + 1) + 1) + 1) + 1) + 1) + 1) + N) + N) + N);
       vars.resize(num_params__
         + (emit_transformed_parameters * num_transformed)
         + (emit_generated_quantities * num_gen_quantities));
