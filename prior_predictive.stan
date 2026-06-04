@@ -11,6 +11,7 @@ data {
   int<lower=1> N;
   vector[N] distance_log_std;
   vector[N] elevation_log_std;
+  vector[N] altitude_log_std;
   vector[N] steepness_std;
 }
 
@@ -18,6 +19,7 @@ generated quantities {
   real alpha;
   real beta_dist;
   real beta_elev;
+  real beta_alt;
   real beta_steep;
   real<lower=0> sigma;
   real<lower=2> nu;
@@ -27,10 +29,11 @@ generated quantities {
   vector[N] time_rep;
 
   // Draw parameters directly from the priors (no data, no likelihood)
-  alpha = normal_rng(log(10), 0.5);
-  beta_dist = normal_rng(0.6, 0.3);
-  beta_elev = normal_rng(0.2, 0.25);
-  beta_steep = normal_rng(0.15, 0.25);
+  alpha = normal_rng(log(15), 1);
+  beta_dist = normal_rng(0.7, 0.4);
+  beta_elev = normal_rng(0.2, 0.3);
+  beta_alt = normal_rng(0.05, 0.1);
+  beta_steep = normal_rng(0.15, 0.2);
   sigma = fabs(normal_rng(0, 0.35));   // half-normal on the log scale
   nu = 2 + gamma_rng(2, 0.1);          // nu_minus_two ~ Gamma(2, 0.1): mean ~20, little mass near 2
 
@@ -38,6 +41,7 @@ generated quantities {
     mu[i] = alpha
             + beta_dist * distance_log_std[i]
             + beta_elev * elevation_log_std[i]
+            + beta_alt * altitude_log_std[i]
             + beta_steep * steepness_std[i];
 
     log_time_rep[i] = student_t_rng(nu, mu[i], sigma);
