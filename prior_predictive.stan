@@ -17,10 +17,10 @@ data {
 
 generated quantities {
   real alpha;
-  real beta_dist;
-  real beta_elev;
-  real beta_alt;
-  real beta_steep;
+  real<lower=0> beta_dist;
+  real<lower=0> beta_elev;
+  real<lower=0> beta_alt;
+  real<lower=0> beta_steep;
   real<lower=0> sigma;
   real<lower=2> nu;
 
@@ -30,10 +30,10 @@ generated quantities {
 
   // Draw parameters directly from the priors (no data, no likelihood)
   alpha = normal_rng(log(15), 1);
-  beta_dist = normal_rng(0.7, 0.4);
-  beta_elev = normal_rng(0.2, 0.3);
-  beta_alt = normal_rng(0.05, 0.1);
-  beta_steep = normal_rng(0.15, 0.2);
+  beta_dist = fabs(normal_rng(0.7, 0.4));
+  beta_elev = fabs(normal_rng(0.2, 0.3));
+  beta_alt = fabs(normal_rng(0.05, 0.1));
+  beta_steep = fabs(normal_rng(0.15, 0.2));
   sigma = fabs(normal_rng(0, 0.35));   // half-normal on the log scale
   nu = 2 + gamma_rng(2, 0.1);          // nu_minus_two ~ Gamma(2, 0.1): mean ~20, little mass near 2
 

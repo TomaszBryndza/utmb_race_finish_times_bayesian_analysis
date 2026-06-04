@@ -11,20 +11,20 @@ stan::math::profile_map profiles__;
 static constexpr std::array<const char*, 35> locations_array__ = 
 {" (found before start of program)",
  " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 19, column 2 to column 13)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 20, column 2 to column 17)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 21, column 2 to column 17)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 22, column 2 to column 16)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 23, column 2 to column 18)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 20, column 2 to column 26)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 21, column 2 to column 26)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 22, column 2 to column 25)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 23, column 2 to column 27)",
  " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 24, column 2 to column 22)",
  " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 25, column 2 to column 19)",
  " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 27, column 2 to column 15)",
  " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 28, column 2 to column 25)",
  " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 29, column 2 to column 21)",
  " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 32, column 2 to column 33)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 33, column 2 to column 35)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 34, column 2 to column 35)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 35, column 2 to column 35)",
- " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 36, column 2 to column 37)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 33, column 2 to column 41)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 34, column 2 to column 41)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 35, column 2 to column 41)",
+ " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 36, column 2 to column 43)",
  " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 37, column 2 to column 36)",
  " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 38, column 2 to column 29)",
  " (in '/home/utmb_race_finish_times_bayesian_analysis/prior_predictive.stan', line 41, column 4 to line 45, column 44)",
@@ -295,13 +295,17 @@ class prior_predictive_model final : public model_base_crtp<prior_predictive_mod
       current_statement__ = 11;
       alpha = stan::math::normal_rng(stan::math::log(15), 1, base_rng__);
       current_statement__ = 12;
-      beta_dist = stan::math::normal_rng(0.7, 0.4, base_rng__);
+      beta_dist = stan::math::fabs(
+                    stan::math::normal_rng(0.7, 0.4, base_rng__));
       current_statement__ = 13;
-      beta_elev = stan::math::normal_rng(0.2, 0.3, base_rng__);
+      beta_elev = stan::math::fabs(
+                    stan::math::normal_rng(0.2, 0.3, base_rng__));
       current_statement__ = 14;
-      beta_alt = stan::math::normal_rng(0.05, 0.1, base_rng__);
+      beta_alt = stan::math::fabs(
+                   stan::math::normal_rng(0.05, 0.1, base_rng__));
       current_statement__ = 15;
-      beta_steep = stan::math::normal_rng(0.15, 0.2, base_rng__);
+      beta_steep = stan::math::fabs(
+                     stan::math::normal_rng(0.15, 0.2, base_rng__));
       current_statement__ = 16;
       sigma = stan::math::fabs(stan::math::normal_rng(0, 0.35, base_rng__));
       current_statement__ = 17;
@@ -337,6 +341,17 @@ class prior_predictive_model final : public model_base_crtp<prior_predictive_mod
               stan::model::index_uni(i))),
           "assigning variable time_rep", stan::model::index_uni(i));
       }
+      current_statement__ = 2;
+      stan::math::check_greater_or_equal(function__, "beta_dist", beta_dist,
+                                            0);
+      current_statement__ = 3;
+      stan::math::check_greater_or_equal(function__, "beta_elev", beta_elev,
+                                            0);
+      current_statement__ = 4;
+      stan::math::check_greater_or_equal(function__, "beta_alt", beta_alt, 0);
+      current_statement__ = 5;
+      stan::math::check_greater_or_equal(function__, "beta_steep",
+                                            beta_steep, 0);
       current_statement__ = 6;
       stan::math::check_greater_or_equal(function__, "sigma", sigma, 0);
       current_statement__ = 7;
