@@ -1,215 +1,636 @@
 # Bayesian Analysis of UTMB Ultra-Trail Race Finish Times
 
+This repository contains a Bayesian workflow for modelling ultra-trail race finish times using data from the UTMB World Series. The project focuses on explaining and predicting race times from course characteristics such as distance, elevation gain, steepness and altitude. It compares standard Gaussian regression models with robust Student-t alternatives and evaluates them using posterior diagnostics, posterior predictive checks, LOO-CV and WAIC.
+
+The current branch, `unified_log_model`, uses a log-time formulation for the main mean finish-time models. This means the model is fitted to `log(Mean Finish Time)` and predictions are transformed back to hours with `exp(...)`, which guarantees strictly positive predicted finish times.
+
+---
+
+## Table of Contents
+
+- [Project Overview](#project-overview)
+- [Research Questions](#research-questions)
+- [Dataset](#dataset)
+- [Bayesian Workflow](#bayesian-workflow)
+- [Modelled Targets](#modelled-targets)
+- [Model Specification](#model-specification)
+- [Prior Design](#prior-design)
+- [Posterior Analysis and Model Checking](#posterior-analysis-and-model-checking)
+- [Model Comparison](#model-comparison)
+- [Repository Structure](#repository-structure)
+- [Installation](#installation)
+- [How to Run the Project](#how-to-run-the-project)
+- [Reproducibility Notes](#reproducibility-notes)
+- [Generated Figures](#generated-figures)
+- [Limitations](#limitations)
+- [Possible Extensions](#possible-extensions)
+
+---
+
 ## Project Overview
 
-This project applies the full Bayesian workflow to model **Mean Finish Time** of ultra-trail running races using data from the UTMB (Ultra-Trail du Mont-Blanc) World Series. Two competing models — a Normal linear regression (baseline) and a Student-t linear regression (robust alternative) — are compared using information-theoretic criteria.
+Ultra-trail races differ substantially in distance, elevation gain, technical difficulty, altitude and location. As a result, finishing times are strongly right-skewed, strictly positive and affected by outlier races caused by terrain, weather, course design or data quality issues.
 
-### Research Question
+This project applies the full Bayesian workflow to model two race-level time targets:
 
-> How do race distance and elevation gain influence mean finish time in ultra-trail races, and does accounting for heavy-tailed residuals (outlier races) improve predictive performance?
+1. **Mean Finish Time** — average finish time of participants in a race.
+2. **Winning Time** — finish time of the race winner.
 
-### Dataset
+For each target, the project compares:
 
-- **Source**: Kaggle — `mgpoirot/utmb-world-race-daa` (UTMB World Race Data)
-- **Raw observations**: 38,460 race results
-- **After cleaning**: 36,433 observations (removed missing values and anomalies)
-- **4 race categories**: 20K, 50K, 100K, 100M
+- a **Normal linear regression** model as a baseline;
+- a **Student-t linear regression** model as a robust alternative.
 
-### Response Variable
-
-- **Mean Finish Time** (hours): continuous, positive, right-skewed (skewness ≈ 2.0, excess kurtosis ≈ 5.0)
-
-### Predictors
-
-- **Distance** (km): standardized (mean=0, std=1) for modeling
-- **Elevation Gain** (m): standardized (mean=0, std=1) for modeling
-
-### Models
-
-| | Model 1 (Normal) | Model 2 (Student-t) |
-|---|---|---|
-| Likelihood | $y_i \sim \text{Normal}(\mu_i, \sigma)$ | $y_i \sim \text{Student-t}(\nu, \mu_i, \sigma)$ |
-| Mean function | $\mu_i = \alpha + \beta_{dist} \cdot x_{1i} + \beta_{elev} \cdot x_{2i}$ | Same |
-| Parameters | $\alpha, \beta_{dist}, \beta_{elev}, \sigma$ | $\alpha, \beta_{dist}, \beta_{elev}, \sigma, \nu$ |
-| Tail behavior | Light (exponential decay) | Heavy (polynomial decay) |
-| Robustness | Low | High |
-
-### Priors
-
-| Parameter | Prior | Rationale |
-|---|---|---|
-| $\alpha$ | Normal(10, 5) | Average race finish ~10h at mean distance/elevation |
-| $\beta_{dist}$ | Normal(5, 3) | 1 SD distance (~30km) adds ~5h |
-| $\beta_{elev}$ | Normal(2, 2) | 1 SD elevation (~1500m) adds ~2h |
-| $\sigma$ | Exponential(0.2) | Residual SD, mean=5h |
-| $\nu$ | Gamma(2, 0.1) | Degrees of freedom, mean=20, allows heavy tails |
-
-### Key Findings (from executed results)
-
-1. **Student-t model wins decisively** — ELPD difference ≈ 1286 (SE ≈ 137), ratio ≈ 9.4 — both LOO and WAIC agree
-2. **Very heavy tails confirmed** — Posterior $\nu \approx 1.74$ (95% HDI: [1.62, 1.87]) — variance undefined ($\nu < 2$)
-3. **58.6% lower sigma** — Student-t $\sigma \approx 1.01$h vs Normal $\sigma \approx 2.44$h
-4. **Fewer problematic observations** — Normal has 1 Pareto-k > 0.7; Student-t has 0
-5. **Distance dominates** — $\beta_{dist}$ ≈ 5.55–6.23h per SD, $\beta_{elev}$ ≈ 2.34–2.59h per SD
-
-### Computational Notes
-
-- **Subsampling**: Fitting notebooks use a random subsample of 5,000 observations (from 36,433) to prevent kernel crashes from memory exhaustion (36K obs × 8000 posterior draws × 3 generated quantity arrays ≈ 7 GB)
-- **Sampling**: 4 chains × 1,000 post-warmup iterations = 4,000 posterior draws per model
-- **EDA**: Notebook 01 uses the full dataset (36,433 observations) for all exploratory analysis
-
-### Tools and Libraries
-
-- Python 3.11
-- CmdStanPy 1.2.5 (Stan interface)
-- ArviZ 0.21.0 (Bayesian visualization and diagnostics)
-- pandas 2.2.3, numpy 2.2.4, scipy 1.15.2
-- kagglehub 0.3.13 (dataset download)
+The main modelling idea is that a Student-t likelihood can better handle heavy-tailed residuals and atypical races without forcing the whole model to inflate the residual scale parameter.
 
 ---
 
-## Project Structure
+## Research Questions
 
-```
-project/
-├── 01_problem_formulation.ipynb       — Problem definition, data loading, EDA
-├── 02_model_specification_priors.ipynb — Model specs, prior rationale, prior predictive checks
-├── 03_posterior_model1_normal.ipynb    — Fit Normal model, diagnostics, PPC, posteriors
-├── 04_posterior_model2_student_t.ipynb — Fit Student-t model, diagnostics, PPC, posteriors
-├── 05_model_comparison.ipynb          — LOO, WAIC, Pareto-k, final assessment
-├── model1_normal.stan                 — Stan code for Normal model
-├── model2_student_t.stan              — Stan code for Student-t model
-├── utmb_processed.csv                 — Preprocessed data (36,433 rows)
-├── fig*.png                           — Saved figures from all notebooks
-├── notes.txt                          — Design notes
-└── PROJECT_DESCRIPTION.md             — This file
+The project addresses the following questions:
+
+1. How do race distance, elevation-related variables and altitude influence expected ultra-trail finish times?
+2. Can a Bayesian regression model quantify uncertainty around expected race times?
+3. Does modelling finish time on the logarithmic scale improve the physical validity of predictions?
+4. Does a robust Student-t likelihood provide better predictive performance than a Normal likelihood?
+5. Are model conclusions consistent across mean participant performance and elite/winning performance?
+
+---
+
+## Dataset
+
+The data comes from the Kaggle dataset:
+
+```text
+mgpoirot/utmb-world-race-daa
 ```
 
----
+The raw dataset contains UTMB World Series race-level observations, including race identifiers, country, continent, race category, distance, elevation gain, participant counts and race timing variables.
 
-## Requirements Analysis
+The preprocessing notebook filters the data to the main UTMB race categories:
 
-The project is evaluated against 6 grading criteria, each worth 4 points (24 points total). Below is a requirement-by-requirement analysis showing where each task is implemented.
+- `20K`
+- `50K`
+- `100K`
+- `100M`
 
----
+The cleaned dataset is saved as:
 
-### 1. Problem Formulation (4 pts)
+```text
+utmb_processed.csv
+```
 
-| Requirement | Status | Location |
-|---|---|---|
-| Clear problem statement | ✅ | `01_problem_formulation.ipynb`, Section 1.1 (Cell 1) — "Can we predict mean finish time from distance and elevation?" |
-| Data source identified and justified | ✅ | `01_problem_formulation.ipynb`, Section 1.2 (Cell 1) — Kaggle UTMB dataset, justification for real-world ultra-trail data |
-| Data loading and preprocessing | ✅ | `01_problem_formulation.ipynb`, Cells 2-4 — kagglehub download, cleaning (NaN removal, anomaly filtering), standardization |
-| Exploratory data analysis | ✅ | `01_problem_formulation.ipynb`, Cells 5-7 — Distribution plots, QQ plots, scatter plots, correlation matrix, descriptive statistics |
-| Variable selection justified | ✅ | `01_problem_formulation.ipynb`, Section 1.3 — Response (Mean Finish Time) chosen as continuous metric; predictors (Distance, Elevation Gain) chosen based on strong correlations (r=0.937, r=0.85) |
-| Data characteristics discussed | ✅ | `01_problem_formulation.ipynb`, Cell 7 — Skewness (1.99), kurtosis (4.94), heavy right tail motivates Student-t model |
+Main raw variables used in the project include:
 
----
+| Variable | Description |
+|---|---|
+| `Race Category` | UTMB race category: `20K`, `50K`, `100K`, `100M` |
+| `Distance` | Race distance in kilometres |
+| `Elevation Gain` | Total positive elevation gain in metres |
+| `Mean Finish Time` | Mean finish time in decimal hours |
+| `Winning Time` | Winning finish time in decimal hours |
+| `N Participants` | Number of race participants |
+| `Year` | Race year |
+| `Country` | Country code/location |
+| `Elevation` | Approximate altitude above sea level, when available |
 
-### 2. Model Specification (4 pts)
+Derived variables used for modelling include:
 
-| Requirement | Status | Location |
-|---|---|---|
-| Two models mathematically specified | ✅ | `02_model_specification_priors.ipynb`, Section 2.1 (Cell 1) — Full LaTeX formulas for both models |
-| Stan code for Model 1 | ✅ | `model1_normal.stan` — Complete Stan program (data, parameters, model, generated quantities) |
-| Stan code for Model 2 | ✅ | `model2_student_t.stan` — Complete Stan program with nu parameter and student_t likelihood |
-| Technical model description | ✅ | `02_model_specification_priors.ipynb`, Section 2.2 (Cell 3) — Full Stan code listings with annotations |
-| Justification for model choice | ✅ | `02_model_specification_priors.ipynb`, Section 2.1 — Comparison table (likelihood, parameters, tail behavior, robustness), rationale from EDA findings |
-| Models differ in a meaningful way | ✅ | `02_model_specification_priors.ipynb`, Section 2.1 — Student-t nests Normal (ν→∞), provides robustness to outlier races without inflating σ |
+| Derived variable | Description |
+|---|---|
+| `log_time` | Natural logarithm of `Mean Finish Time` |
+| `distance_log_std` | Standardized log-distance |
+| `elevation_log_std` | Standardized elevation-related predictor used by the Stan model |
+| `steepness_std` | Standardized log-transformed elevation gain per kilometre |
+| `altitude_std` | Standardized altitude-related predictor |
+| `distance_std` | Standardized distance, used in the winning-time models |
+| `elevation_std` / `elevation_gain_std` | Standardized elevation-related variable used in the winning-time workflow |
 
----
-
-### 3. Prior Selection (4 pts)
-
-| Requirement | Status | Location |
-|---|---|---|
-| All priors explicitly listed | ✅ | `02_model_specification_priors.ipynb`, Section 2.3 (Cell 4) — Table with all 5 priors |
-| Rationale for each prior | ✅ | `02_model_specification_priors.ipynb`, Section 2.3 — Domain knowledge justification for each parameter's prior |
-| Prior selection method explained | ✅ | `02_model_specification_priors.ipynb`, Section 2.3 — 4-point method: domain knowledge, scale matching, weakly informative principle, prior predictive simulation |
-| Prior predictive check (parameter level) | ✅ | `02_model_specification_priors.ipynb`, Section 2.4 (Cell 6) — Histograms of all 5 prior parameter distributions with 95% intervals |
-| Prior predictive check (measurement level) | ✅ | `02_model_specification_priors.ipynb`, Section 2.5 (Cells 8-9) — Simulated datasets from both models, CDF overlays, summary statistics comparison |
-| Assessment of prior predictive results | ✅ | `02_model_specification_priors.ipynb`, Section 2.6 (Cell 10) — Conclusions about prior adequacy, discussion of negative times artifact |
+> Note: the repository contains both legacy linear-scale standardized variables and the log-scale variables used by the current `unified_log_model` branch. The Stan files are the source of truth for the exact model input names.
 
 ---
 
-### 4. Posterior Analysis — Model 1 (4 pts)
+## Bayesian Workflow
 
-| Requirement | Status | Location |
-|---|---|---|
-| MCMC sampling | ✅ | `03_posterior_model1_normal.ipynb`, Cell 3 — 4 chains, 1000 post-warmup iterations, seed=42 (5000-obs subsample) |
-| R-hat diagnostic | ✅ | `03_posterior_model1_normal.ipynb`, Cell 6 — All R-hat values checked against 1.01 threshold |
-| ESS diagnostic (bulk and tail) | ✅ | `03_posterior_model1_normal.ipynb`, Cell 6 — ESS_bulk and ESS_tail checked against 400 threshold |
-| Divergence check | ✅ | `03_posterior_model1_normal.ipynb`, Cell 5 — `fit1.diagnose()` output |
-| Trace plots | ✅ | `03_posterior_model1_normal.ipynb`, Cell 7 — ArviZ trace plots for all parameters, saved as fig05 |
-| Posterior predictive check (density) | ✅ | `03_posterior_model1_normal.ipynb`, Cell 9 — `az.plot_ppc` density overlay + observed vs predicted scatter |
-| Posterior predictive check (summary stats) | ✅ | `03_posterior_model1_normal.ipynb`, Cell 10 — Mean, std, min, max, skewness, % negative predictions |
-| Data consistency assessment | ✅ | `03_posterior_model1_normal.ipynb`, Cell 11 — Bayesian p-values for all summary statistics |
-| PPC by subgroup | ✅ | `03_posterior_model1_normal.ipynb`, Cell 12 — PPC by race category (20K, 50K, 100K, 100M) |
-| Marginal posterior distributions | ✅ | `03_posterior_model1_normal.ipynb`, Cell 13 — `az.plot_posterior` with 95% HDI |
-| Parameter interpretation | ✅ | `03_posterior_model1_normal.ipynb`, Cell 14 — Posterior means, HDIs, original-units conversion, probability statements |
-| Concentration/diffusion discussion | ✅ | `03_posterior_model1_normal.ipynb`, Cell 14 — Coefficient of Variation (CV) for all parameters |
-| Pair plot | ✅ | `03_posterior_model1_normal.ipynb`, Cell 15 — `az.plot_pair` with KDE and marginals |
-| Model limitations discussed | ✅ | `03_posterior_model1_normal.ipynb`, Section 3.5 — Symmetric residuals, light tails, negative predictions, homoscedasticity |
+The project follows a structured Bayesian workflow:
 
----
+1. **Problem formulation**
+   - define the modelling objective;
+   - identify target variables and predictors;
+   - justify why finish time is suitable for probabilistic modelling.
 
-### 5. Posterior Analysis — Model 2 (4 pts)
+2. **Exploratory data analysis**
+   - inspect target distributions;
+   - study skewness and heavy tails;
+   - analyse relationships between distance, elevation gain and finish times;
+   - motivate the use of log-transformation and robust likelihoods.
 
-| Requirement | Status | Location |
-|---|---|---|
-| MCMC sampling | ✅ | `04_posterior_model2_student_t.ipynb`, Cell 3 — 4 chains, 1000 post-warmup iterations, seed=42 (5000-obs subsample) |
-| R-hat diagnostic | ✅ | `04_posterior_model2_student_t.ipynb`, Cell 6 — All R-hat values checked (including nu) |
-| ESS diagnostic (bulk and tail) | ✅ | `04_posterior_model2_student_t.ipynb`, Cell 6 — Note about nu potentially having lower ESS |
-| Divergence check | ✅ | `04_posterior_model2_student_t.ipynb`, Cell 5 — `fit2.diagnose()` output |
-| Trace plots | ✅ | `04_posterior_model2_student_t.ipynb`, Cell 7 — Trace plots for all 5 parameters, saved as fig11 |
-| Sampling issues discussion | ✅ | `04_posterior_model2_student_t.ipynb`, Section after Cell 7 — Discussion of nu identification, mitigations |
-| Posterior predictive check (density) | ✅ | `04_posterior_model2_student_t.ipynb`, Cell 9 — PPC density overlay + observed vs predicted |
-| Posterior predictive check (summary stats) | ✅ | `04_posterior_model2_student_t.ipynb`, Cell 10 — Mean, std, min, max, skewness, **kurtosis** (key for Student-t) |
-| Data consistency assessment | ✅ | `04_posterior_model2_student_t.ipynb`, Cell 11 — Bayesian p-values with kurtosis added |
-| PPC by subgroup | ✅ | `04_posterior_model2_student_t.ipynb`, Cell 12 — PPC by race category |
-| Marginal posterior distributions | ✅ | `04_posterior_model2_student_t.ipynb`, Cell 13 — All 5 parameters with 95% HDI |
-| Parameter interpretation (including ν) | ✅ | `04_posterior_model2_student_t.ipynb`, Cell 14 — Full interpretation, P(ν<10), P(ν<30), tail heaviness assessment |
-| Sigma comparison between models | ✅ | `04_posterior_model2_student_t.ipynb`, Cell 15 — Side-by-side σ histogram, % reduction reported |
-| Concentration/diffusion discussion | ✅ | `04_posterior_model2_student_t.ipynb`, Cell 14 — CV for all 5 parameters |
-| Pair plot | ✅ | `04_posterior_model2_student_t.ipynb`, Cell 16 — Pair plot with sigma-nu correlation discussion |
-| Model summary | ✅ | `04_posterior_model2_student_t.ipynb`, Section 4.5 — Key findings, comparison with Model 1 |
+3. **Model specification**
+   - define Normal and Student-t regression models;
+   - specify predictors and likelihoods;
+   - implement the models in Stan.
+
+4. **Prior selection**
+   - use weakly informative priors;
+   - encode domain expectations about distance, elevation, steepness and altitude;
+   - perform prior predictive checks.
+
+5. **Posterior inference**
+   - sample from the posterior using CmdStanPy;
+   - inspect convergence diagnostics;
+   - analyse posterior distributions of model parameters.
+
+6. **Posterior predictive checking**
+   - simulate replicated finish times;
+   - compare observed and simulated distributions;
+   - check summary statistics and behaviour by race category.
+
+7. **Model comparison**
+   - compare models using PSIS-LOO and WAIC;
+   - inspect Pareto-k diagnostics;
+   - evaluate robustness and predictive performance.
 
 ---
 
-### 6. Model Comparison (4 pts)
+## Modelled Targets
 
-| Requirement | Status | Location |
-|---|---|---|
-| LOO (PSIS-LOO) computation | ✅ | `05_model_comparison.ipynb`, Section 5.1 (Cells 4-5) — `az.loo()` for both models |
-| LOO comparison table | ✅ | `05_model_comparison.ipynb`, Cell 5 — `az.compare()` with elpd_loo, p_loo, elpd_diff, dse, weight |
-| LOO visualization | ✅ | `05_model_comparison.ipynb`, Cell 6 — `az.plot_compare()`, saved as fig18 |
-| LOO discussion (elpd_diff / dse) | ✅ | `05_model_comparison.ipynb`, Cell 8 — Quantitative assessment of difference significance |
-| WAIC computation | ✅ | `05_model_comparison.ipynb`, Section 5.2 (Cells 9-10) — `az.waic()` for both models |
-| WAIC comparison table | ✅ | `05_model_comparison.ipynb`, Cell 10 — `az.compare(..., ic='waic')` |
-| WAIC visualization | ✅ | `05_model_comparison.ipynb`, Cell 10 — `az.plot_compare()`, saved as fig19 |
-| WAIC discussion | ✅ | `05_model_comparison.ipynb`, Cell 11 — Significance assessment, LOO-WAIC agreement check |
-| Pareto-k diagnostics (plot) | ✅ | `05_model_comparison.ipynb`, Section 5.3 (Cell 12) — `az.plot_khat()` for both models |
-| Pareto-k analysis (quantitative) | ✅ | `05_model_comparison.ipynb`, Cell 13 — Threshold summary table (k<0.5, 0.5≤k<0.7, k≥0.7, k≥1.0), interpretation |
-| Side-by-side PPC comparison | ✅ | `05_model_comparison.ipynb`, Section 5.4 (Cell 14) — PPC density + residual distributions |
-| Tail behavior comparison | ✅ | `05_model_comparison.ipynb`, Cell 15 — Max value distribution, % extreme values comparison |
-| Final comprehensive assessment | ✅ | `05_model_comparison.ipynb`, Section 5.5 (Cell 16) — Multi-criteria summary table, 5-point assessment |
-| Final comparison visualization | ✅ | `05_model_comparison.ipynb`, Cell 17 — 4-panel summary figure (LOO, WAIC, Pareto-k, σ posteriors) |
-| Conclusions | ✅ | `05_model_comparison.ipynb`, Section 5.6 — Bayesian workflow summary, key takeaways |
+### 1. Mean Finish Time
+
+The primary workflow models:
+
+```text
+log_time = log(Mean Finish Time)
+```
+
+This is the main target for notebooks `01`–`05` and Stan models `model1_normal.stan` and `model2_student_t.stan`.
+
+The log transformation is used because finish time is strictly positive and strongly right-skewed. Back-transforming posterior predictions with the exponential function ensures that predicted times in hours are always positive.
+
+### 2. Winning Time
+
+The additional workflow in `06_winning_time_bayesian_workflow.ipynb` models:
+
+```text
+Winning Time
+```
+
+This workflow compares two additional models:
+
+- `model3_winning_normal.stan`
+- `model4_winning_student_t.stan`
+
+The winning-time models use standardized distance and elevation gain as predictors and compare Normal and Student-t likelihoods on the original hour scale.
 
 ---
 
-## Summary
+## Model Specification
 
-All 6 grading criteria are fully addressed across the 5 notebooks and 2 Stan model files. The project follows the complete Bayesian workflow: problem formulation → model specification → prior selection with predictive checks → posterior fitting with full diagnostics → model comparison with information criteria. Each notebook contains both code and interpretive markdown commentary.
+## Mean Finish Time Models
 
-### Execution Results Summary
+The main models are fitted to:
 
-All 5 notebooks have been executed end-to-end with no errors:
+```text
+y_i = log(T_i)
+```
 
-| Notebook | Status | Key Output |
-|---|---|---|
-| 01 (EDA) | ✅ Executed (full 36,433 rows) | Distribution plots, correlation matrix, `utmb_processed.csv` |
-| 02 (Priors) | ✅ Executed | Prior predictive checks (parameter + measurement level), Stan models compiled |
-| 03 (Model 1) | ✅ Executed (5,000 subsample) | R-hat=1.00, ESS>2400, 0 divergences, α=10.66, β_dist=6.23, β_elev=2.59, σ=2.44 |
-| 04 (Model 2) | ✅ Executed (5,000 subsample) | R-hat=1.00, ESS>1749, 0 divergences, α=10.13, β_dist=5.55, β_elev=2.34, σ=1.01, ν=1.74 |
-| 05 (Compare) | ✅ Executed (5,000 subsample) | ELPD diff=1286 (SE=137), Student-t wins decisively (diff/SE=9.4) |
+where `T_i` is the mean finish time in hours for race `i`.
+
+The shared linear predictor is:
+
+```text
+mu_i = alpha
+     + beta_dist  * distance_log_std_i
+     + beta_elev  * elevation_log_std_i
+     + beta_steep * steepness_std_i
+     + beta_alt   * altitude_std_i
+```
+
+### Model 1: Normal Log-Time Regression
+
+Implemented in:
+
+```text
+model1_normal.stan
+```
+
+Likelihood:
+
+```text
+log(T_i) ~ Normal(mu_i, sigma)
+```
+
+This model assumes light-tailed residuals on the log-time scale.
+
+### Model 2: Student-t Log-Time Regression
+
+Implemented in:
+
+```text
+model2_student_t.stan
+```
+
+Likelihood:
+
+```text
+log(T_i) ~ Student_t(nu, mu_i, sigma)
+```
+
+This model uses the same predictor set as Model 1 but replaces the Normal likelihood with a Student-t likelihood. The Student-t model is designed to be more robust to outlier races and heavy-tailed residuals.
+
+In the current Stan implementation:
+
+```text
+nu = 2 + nu_minus_two
+```
+
+so the degrees of freedom parameter is constrained to be greater than 2.
+
+---
+
+## Winning Time Models
+
+### Model 3: Normal Winning-Time Regression
+
+Implemented in:
+
+```text
+model3_winning_normal.stan
+```
+
+Likelihood:
+
+```text
+Winning Time_i ~ Normal(mu_i, sigma)
+```
+
+with:
+
+```text
+mu_i = alpha + beta_dist * distance_std_i + beta_elev * elevation_std_i
+```
+
+### Model 4: Student-t Winning-Time Regression
+
+Implemented in:
+
+```text
+model4_winning_student_t.stan
+```
+
+Likelihood:
+
+```text
+Winning Time_i ~ Student_t(nu, mu_i, sigma)
+```
+
+This model is the robust counterpart to Model 3.
+
+---
+
+## Prior Design
+
+The project uses weakly informative priors that reflect domain knowledge while still allowing the data to dominate posterior inference.
+
+For the mean finish-time models, the current Stan files use priors on the log-time scale. The regression coefficients have a multiplicative interpretation after exponentiation:
+
+```text
+exp(beta)
+```
+
+represents the approximate multiplicative change in finish time associated with a one-standard-deviation increase in the corresponding predictor.
+
+The prior design reflects the following assumptions:
+
+- longer races should generally take more time;
+- higher elevation gain should generally increase race duration;
+- steeper courses should generally be slower;
+- altitude may have an additional physiological effect;
+- the Student-t degrees-of-freedom parameter controls residual tail heaviness.
+
+Prior predictive checks are performed in:
+
+```text
+02_model_specification_priors.ipynb
+```
+
+and the supporting Stan prior predictive model is provided in:
+
+```text
+prior_predictive.stan
+```
+
+---
+
+## Posterior Analysis and Model Checking
+
+Posterior analysis is split into separate notebooks:
+
+| Notebook | Purpose |
+|---|---|
+| `03_posterior_model1_normal.ipynb` | Fit and evaluate the Normal log-time model |
+| `04_posterior_model2_student_t.ipynb` | Fit and evaluate the Student-t log-time model |
+| `06_winning_time_bayesian_workflow.ipynb` | Fit and evaluate the winning-time models |
+
+The analysis includes:
+
+- MCMC sampling with multiple chains;
+- convergence checks using R-hat;
+- effective sample size checks;
+- divergence diagnostics;
+- trace plots;
+- marginal posterior plots;
+- pair plots for parameter dependence;
+- posterior predictive checks;
+- comparison of observed and replicated summary statistics;
+- category-level posterior predictive checks.
+
+Generated posterior predictive quantities are stored in the Stan `generated quantities` blocks. For the log-time models, replicated values are produced on the log scale and then transformed back to hours:
+
+```text
+time_rep = exp(log_time_rep)
+time_mu  = exp(mu)
+```
+
+---
+
+## Model Comparison
+
+Model comparison is performed in:
+
+```text
+05_model_comparison.ipynb
+```
+
+The compared models are:
+
+| Model | Target scale | Likelihood | Robustness |
+|---|---:|---|---|
+| Model 1 | log-time | Normal | baseline |
+| Model 2 | log-time | Student-t | robust |
+
+The notebook compares predictive performance using:
+
+| Criterion | Meaning |
+|---|---|
+| PSIS-LOO | Approximate leave-one-out cross-validation |
+| WAIC | Widely Applicable Information Criterion |
+| ELPD | Expected log predictive density; higher is better |
+| Pareto-k | Reliability diagnostic for PSIS-LOO |
+
+The winning-time workflow performs an analogous comparison for Model 3 and Model 4.
+
+The exact numeric results are available in the executed notebooks and generated figures. In general, the comparison is designed to answer whether the Student-t likelihood gives better predictive performance and more reliable handling of outlier races than the Normal likelihood.
+
+---
+
+## Repository Structure
+
+```text
+.
+├── 01_problem_formulation.ipynb
+├── 02_model_specification_priors.ipynb
+├── 03_posterior_model1_normal.ipynb
+├── 04_posterior_model2_student_t.ipynb
+├── 05_model_comparison.ipynb
+├── 06_winning_time_bayesian_workflow.ipynb
+├── data_exploration.ipynb
+│
+├── model1_normal.stan
+├── model2_student_t.stan
+├── model3_winning_normal.stan
+├── model4_winning_student_t.stan
+├── prior_predictive.stan
+│
+├── utmb_processed.csv
+├── PROJECT_DESCRIPTION.md
+├── notes.txt
+├── todo.md
+│
+├── fig*.png
+├── fig_wt_*.png
+├── plot*.png
+│
+├── model1_normal
+├── model1_normal.hpp
+├── model2_student_t
+├── model2_student_t.hpp
+├── model3_winning_normal
+├── model4_winning_student_t
+└── prior_predictive
+```
+
+### Main notebooks
+
+| File | Description |
+|---|---|
+| `01_problem_formulation.ipynb` | Data loading, cleaning, feature engineering and exploratory analysis |
+| `02_model_specification_priors.ipynb` | Model definitions, prior rationale and prior predictive checks |
+| `03_posterior_model1_normal.ipynb` | Posterior analysis of the Normal log-time model |
+| `04_posterior_model2_student_t.ipynb` | Posterior analysis of the Student-t log-time model |
+| `05_model_comparison.ipynb` | LOO, WAIC, Pareto-k diagnostics and final comparison |
+| `06_winning_time_bayesian_workflow.ipynb` | Separate Bayesian workflow for winning time |
+| `data_exploration.ipynb` | Additional exploratory analysis |
+
+### Stan models
+
+| File | Description |
+|---|---|
+| `model1_normal.stan` | Normal regression for log mean finish time |
+| `model2_student_t.stan` | Student-t regression for log mean finish time |
+| `model3_winning_normal.stan` | Normal regression for winning time |
+| `model4_winning_student_t.stan` | Student-t regression for winning time |
+| `prior_predictive.stan` | Prior predictive simulation model |
+
+### Generated artifacts
+
+The repository also contains generated figures, compiled Stan executables and generated `.hpp` files. These are outputs of the notebooks and Stan compilation process. They are useful for inspection but can be regenerated by rerunning the workflow.
+
+---
+
+## Installation
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/TomaszBryndza/utmb_race_finish_times_bayesian_analysis.git
+cd utmb_race_finish_times_bayesian_analysis
+git checkout unified_log_model
+```
+
+### 2. Create a Python environment
+
+Using `venv`:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate      # Linux/macOS
+# .venv\Scripts\activate       # Windows
+```
+
+or using Conda:
+
+```bash
+conda create -n utmb-bayes python=3.11 -y
+conda activate utmb-bayes
+```
+
+### 3. Install Python dependencies
+
+```bash
+pip install numpy pandas scipy matplotlib arviz cmdstanpy kagglehub jupyter ipykernel
+```
+
+Optional, but useful for notebooks:
+
+```bash
+pip install ipywidgets tqdm
+```
+
+### 4. Install CmdStan
+
+CmdStanPy requires a working CmdStan installation. After installing `cmdstanpy`, run:
+
+```bash
+python -m cmdstanpy.install_cmdstan
+```
+
+On Linux/macOS, make sure a C++ compiler and `make` are installed. On Windows, installing CmdStan may require a suitable C++ toolchain.
+
+### 5. Register the environment as a Jupyter kernel
+
+```bash
+python -m ipykernel install --user --name utmb-bayes --display-name "Python (UTMB Bayes)"
+```
+
+---
+
+## How to Run the Project
+
+Run the notebooks from the repository root directory in the following order:
+
+```text
+01_problem_formulation.ipynb
+02_model_specification_priors.ipynb
+03_posterior_model1_normal.ipynb
+04_posterior_model2_student_t.ipynb
+05_model_comparison.ipynb
+06_winning_time_bayesian_workflow.ipynb
+```
+
+Recommended workflow:
+
+1. Open Jupyter:
+
+```bash
+jupyter notebook
+```
+
+or:
+
+```bash
+jupyter lab
+```
+
+2. Select the `Python (UTMB Bayes)` kernel.
+3. Run `01_problem_formulation.ipynb` first to generate or refresh `utmb_processed.csv`.
+4. Run `02_model_specification_priors.ipynb` to inspect prior assumptions.
+5. Run posterior fitting notebooks `03` and `04`.
+6. Run `05_model_comparison.ipynb` to compare the two mean finish-time models.
+7. Run `06_winning_time_bayesian_workflow.ipynb` for the winning-time analysis.
+
+---
+
+## Reproducibility Notes
+
+- The notebooks use random seeds where appropriate, but MCMC results may still vary slightly across machines and library versions.
+- Some posterior fitting steps use a subsample of the full cleaned dataset to reduce memory usage and avoid kernel crashes.
+- The full cleaned dataset is stored as `utmb_processed.csv`.
+- The Stan executables may be recompiled automatically depending on your operating system and CmdStan version.
+- Run notebooks from the repository root to ensure relative paths to `.stan` files, figures and CSV data work correctly.
+- If you modify feature engineering in notebook `01`, rerun all downstream notebooks so that the Stan data and derived predictors remain consistent.
+
+---
+
+## Generated Figures
+
+The repository includes generated figures from EDA, prior checks, posterior diagnostics, posterior predictive checks and model comparison.
+
+Examples include:
+
+| Figure pattern | Meaning |
+|---|---|
+| `fig01_*` to `fig23_*` | Main mean finish-time workflow figures |
+| `fig_wt_*` | Winning-time workflow figures |
+| `plot*.png` | Additional exploratory plots |
+
+The most important figure groups are:
+
+- target distributions;
+- predictors vs targets;
+- prior predictive simulations;
+- trace plots;
+- posterior predictive checks;
+- posterior parameter distributions;
+- LOO and WAIC comparisons;
+- Pareto-k diagnostics;
+- tail behaviour comparisons.
+
+---
+
+## Limitations
+
+Important limitations of the current project:
+
+1. **Race-level aggregation**  
+   The dataset is modelled at race level, not individual runner level. Therefore, the model explains race-level average and winning times, not individual athlete performance.
+
+2. **Limited course descriptors**  
+   Distance and elevation gain are important, but they do not fully describe course difficulty. Trail surface, technicality, weather, aid stations and cutoff policies are not directly modelled.
+
+3. **Potential feature-name ambiguity**  
+   The repository contains both legacy and current standardized variables. The Stan files should be treated as the exact specification of the current models.
+
+4. **Subsampling for computation**  
+   Some posterior inference steps may use a subset of observations to reduce memory usage. This improves practicality but means results can depend slightly on the sampled subset.
+
+5. **No hierarchical race structure**  
+   The current models do not explicitly include hierarchical effects for country, year, race event or race category.
+
+---
+
+## Possible Extensions
+
+Potential future improvements include:
+
+- adding hierarchical effects for race category, year, country or event;
+- modelling heteroscedasticity explicitly;
+- including weather or terrain technicality data;
+- using splines or Gaussian processes for nonlinear distance/elevation effects;
+- modelling mean finish time and winning time jointly;
+- comparing additional likelihoods such as lognormal, skew-normal or gamma models;
+- using the full dataset with more memory-efficient generated quantities;
+- adding scripts to reproduce all notebooks from the command line;
+- moving notebooks, data, models and figures into separate directories for cleaner project structure.
+
+---
+
+## Technologies Used
+
+The project uses:
+
+- Python
+- Jupyter Notebook
+- Stan
+- CmdStanPy
+- ArviZ
+- NumPy
+- pandas
+- SciPy
+- Matplotlib
+- kagglehub
+
+---
+
+## Project Status
+
+The repository contains a complete Bayesian workflow for the current dataset and model family. The most important next step is repository cleanup: separating raw data, processed data, notebooks, Stan models and generated figures into dedicated folders, and adding a pinned `requirements.txt` or `environment.yml` for exact reproducibility.
