@@ -38,6 +38,33 @@ Positive race times are modelled on the logarithmic scale, while female particip
 
 ---
 
+This repository contains a Bayesian workflow for modelling ultra-trail race finish times using data from the UTMB World Series. The project focuses on explaining and predicting race times from course characteristics such as distance, elevation gain, steepness and altitude. It compares standard Gaussian regression models with robust Student-t alternatives and evaluates them using posterior diagnostics, posterior predictive checks, LOO-CV and WAIC.
+
+The current branch, `unified_log_model`, uses a log-time formulation for the main mean finish-time models. This means the model is fitted to `log(Mean Finish Time)` and predictions are transformed back to hours with `exp(...)`, which guarantees strictly positive predicted finish times.
+
+---
+
+## Table of Contents
+
+- [Project Overview](#project-overview)
+- [Research Questions](#research-questions)
+- [Dataset](#dataset)
+- [Bayesian Workflow](#bayesian-workflow)
+- [Modelled Targets](#modelled-targets)
+- [Model Specification](#model-specification)
+- [Prior Design](#prior-design)
+- [Posterior Analysis and Model Checking](#posterior-analysis-and-model-checking)
+- [Model Comparison](#model-comparison)
+- [Repository Structure](#repository-structure)
+- [Installation](#installation)
+- [How to Run the Project](#how-to-run-the-project)
+- [Reproducibility Notes](#reproducibility-notes)
+- [Generated Figures](#generated-figures)
+- [Limitations](#limitations)
+- [Possible Extensions](#possible-extensions)
+
+---
+
 ## Project Overview
 
 Ultra-trail race performance depends on multiple interacting factors: distance, elevation gain, route steepness, altitude, race category, geography, race year and unobserved race-specific conditions. Races with similar nominal distance and elevation can still differ because of weather, trail technicality, organization, participant profile and regional differences.
