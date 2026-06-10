@@ -2,74 +2,86 @@
 
 This repository contains a complete Bayesian workflow for analysing UTMB World Series race-level data. The project models three related phenomena:
 
-1. **Mean Finish Time** — average race finish time.
-2. **Winning Time** — time achieved by the race winner.
-3. **Female Participation** — number and share of female participants.
+1. **Mean Finish Time** — the average race finish time.
+2. **Winning Time** — the finish time achieved by the race winner.
+3. **Female Participation** — the number and share of female participants.
 
-The analysis is implemented in Python, Jupyter Notebook and Stan/CmdStanPy. The project follows a full Bayesian workflow: problem formulation, exploratory data analysis, prior design, prior predictive checks, posterior sampling, posterior diagnostics, posterior predictive checks and model comparison using PSIS-LOO and WAIC.
+The analysis is implemented in **Python**, **Jupyter Notebook**, **Stan**, **CmdStanPy** and **ArviZ**. The workflow follows the full Bayesian modelling cycle: problem formulation, exploratory data analysis, prior design, prior predictive checks, posterior sampling, sampling diagnostics, posterior predictive checks and model comparison using **PSIS-LOO** and **WAIC**.
 
 The main modelling principle is:
 
 > Use a likelihood that matches the mathematical nature of the response variable.
 
-Therefore, positive continuous race times are modelled on the logarithmic scale, while female participation is modelled as a bounded count conditioned on the total number of participants.
+Positive race times are modelled on the logarithmic scale, while female participation is modelled as a bounded count conditioned on the total number of participants.
 
 ---
 
 ## Table of Contents
 
-- [Project Motivation](#project-motivation)
+- [Project Overview](#project-overview)
 - [Dataset](#dataset)
 - [Research Questions](#research-questions)
+- [Current Report Notebooks](#current-report-notebooks)
 - [Repository Structure](#repository-structure)
-- [Modelling Tasks](#modelling-tasks)
 - [Feature Engineering](#feature-engineering)
 - [Model Specifications](#model-specifications)
 - [Prior Choices](#prior-choices)
 - [Model Comparison Strategy](#model-comparison-strategy)
 - [Main Results](#main-results)
+- [Generated Outputs](#generated-outputs)
 - [How to Run](#how-to-run)
 - [Installation](#installation)
-- [Generated Figures](#generated-figures)
 - [Reproducibility Notes](#reproducibility-notes)
+- [Troubleshooting Notes](#troubleshooting-notes)
 - [Limitations and Future Work](#limitations-and-future-work)
+- [Final Project Conclusion](#final-project-conclusion)
 
 ---
 
-## Project Motivation
+## Project Overview
 
-Ultra-trail race performance is shaped by several interacting factors: distance, elevation gain, route steepness, altitude, geographical location, race category and year. A deterministic model is insufficient because races with similar distance and elevation can still differ significantly due to route technicality, weather, race organization, participant profile and other unobserved factors.
+Ultra-trail race performance depends on multiple interacting factors: distance, elevation gain, route steepness, altitude, race category, geography, race year and unobserved race-specific conditions. Races with similar nominal distance and elevation can still differ because of weather, trail technicality, organization, participant profile and regional differences.
 
 A Bayesian approach is useful because it provides:
 
 - full posterior uncertainty for model parameters;
-- interpretable prior assumptions;
+- explicit prior assumptions;
 - posterior predictive distributions instead of point predictions only;
-- explicit treatment of outliers through robust likelihoods;
-- principled model comparison through approximate out-of-sample predictive performance.
+- robust alternatives for outliers and heavy-tailed residuals;
+- principled predictive comparison through PSIS-LOO and WAIC.
 
-The project compares simple baseline models with more robust or flexible alternatives. This makes it possible to evaluate whether additional likelihood flexibility is justified by the data.
+The project compares simple baseline models with more robust likelihoods:
+
+- **Normal vs Student-t** for log-time models;
+- **Binomial vs Beta-Binomial** for female participation counts.
 
 ---
 
 ## Dataset
 
-The project uses UTMB World Series race-level data from Kaggle:
+The project uses race-level data from the UTMB World Series dataset:
 
 ```text
 mgpoirot/utmb-world-race-daa
 ```
 
-The preprocessing focuses on the four main UTMB race categories:
+The raw file expected by the notebooks is:
 
 ```text
-20K, 50K, 100K, 100M
+utmb-race-data-sheet.csv
 ```
 
-The cleaned dataset is saved as:
+Some notebooks can also use already processed files:
 
 ```text
 utmb_processed.csv
+utmb_female_participation_processed.csv
+```
+
+The analysis focuses on the four main UTMB race categories:
+
+```text
+20K, 50K, 100K, 100M
 ```
 
 Important variables used in the project:
@@ -82,12 +94,13 @@ Important variables used in the project:
 | `Elevation` | Altitude above sea level in metres | time and participation models |
 | `Mean Finish Time` | Average finish time in hours | mean-time model |
 | `Winning Time` | Winner's finish time in hours | winning-time model |
-| `N Participants` | Total number of participants | female participation model |
+| `N Participants` | Total number of race participants | female participation model |
 | `N Women` | Number of female participants | female participation model |
 | `Year` | Race year | female participation model |
 | `Longitude`, `Latitude` | Race/event coordinates | female participation model |
+| `Country` | Race country | EDA and possible future hierarchical models |
 
-The analysis is race-level, not runner-level. Each row represents an aggregated race observation.
+The analysis is **race-level**, not runner-level. Each row is an aggregated race observation.
 
 ---
 
@@ -98,26 +111,58 @@ The project addresses the following questions:
 1. How do distance, elevation gain, steepness and altitude influence expected race finish times?
 2. Is log-scale modelling appropriate for positive and right-skewed race times?
 3. Does a Student-t likelihood improve predictive performance over a Normal likelihood for time models?
-4. How do distance, elevation, geography and year affect female participation?
+4. How do distance, elevation, steepness, altitude, geography and year affect female participation?
 5. Is ordinary Binomial variation sufficient for female participation counts, or is overdispersion present?
-6. Which model should be preferred for each modelling task according to LOO and WAIC?
+6. Which model should be preferred for each modelling task according to PSIS-LOO, WAIC and posterior predictive checks?
+
+---
+
+## Current Report Notebooks
+
+The current cleaned report notebooks are:
+
+| Report notebook | Topic | Compared models |
+|---|---|---|
+| `final_bayesian_utmb_report_katex_fixed.ipynb` | Mean finish time | Model 1 Normal vs Model 2 Student-t |
+| `final_bayesian_utmb_winning_time_report_text_fixed.ipynb` | Winning time | Model 3 Normal vs Model 4 Student-t |
+| `final_bayesian_utmb_female_participation_report.ipynb` | Female participation | Model 7 Binomial vs Model 8 Beta-Binomial |
+
+These final notebooks are report-oriented. They avoid broken, stale or misleading exploratory plots from earlier notebooks and include cleaner EDA, model formulation, priors, prior predictive checks, posterior diagnostics, posterior predictive checks and model comparison.
+
+The older exploratory notebooks are still useful as development history:
+
+| Notebook | Role |
+|---|---|
+| `01_problem_formulation.ipynb` | Initial data loading, cleaning and problem formulation |
+| `02_model_specification_priors.ipynb` | Initial model/prior work and prior predictive experiments |
+| `03_posterior_model1_normal.ipynb` | Posterior analysis for mean-time Normal model |
+| `04_posterior_model2_student_t.ipynb` | Posterior analysis for mean-time Student-t model |
+| `06_winning_time_log_modeling.ipynb` | Development notebook for winning-time log-scale models |
+| `07_female_participation_modeling.ipynb` | Development notebook for female participation models |
 
 ---
 
 ## Repository Structure
 
-Recommended final project structure:
+Recommended project structure:
 
 ```text
 .
+├── README.md
+├── utmb-race-data-sheet.csv
+├── utmb_processed.csv
+├── utmb_female_participation_processed.csv
+│
+├── final_bayesian_utmb_report_katex_fixed.ipynb
+├── final_bayesian_utmb_winning_time_report_text_fixed.ipynb
+├── final_bayesian_utmb_female_participation_report.ipynb
+│
 ├── 01_problem_formulation.ipynb
 ├── 02_model_specification_priors.ipynb
 ├── 03_posterior_model1_normal.ipynb
 ├── 04_posterior_model2_student_t.ipynb
-├── 05_model_comparison.ipynb
 ├── 06_winning_time_log_modeling.ipynb
 ├── 07_female_participation_modeling.ipynb
-├── 08_final_bayesian_project_report.ipynb
 │
 ├── model1_normal.stan
 ├── model2_student_t.stan
@@ -125,136 +170,82 @@ Recommended final project structure:
 ├── model4_winning_log_student_t.stan
 ├── model7_female_binomial.stan
 ├── model8_female_beta_binomial.stan
-├── prior_predictive.stan
 │
-├── utmb_processed.csv
-├── README.md
-├── PROJECT_DESCRIPTION.md
+├── idata_model1_normal.nc
+├── idata_model2_student_t.nc
+├── idata_winning_log_normal.nc
+├── idata_winning_log_student_t.nc
+├── idata_female_binomial.nc
+├── idata_female_beta_binomial.nc
 │
-├── fig*.png
-├── fig_wt_*.png
-├── fig_female_*.png
-└── plot*.png
+├── report_figures/
+├── report_figures_winning_time/
+└── report_figures_female_participation/
 ```
 
-### Notebook roles
-
-| Notebook | Purpose |
-|---|---|
-| `01_problem_formulation.ipynb` | Data loading, cleaning, preprocessing and exploratory analysis |
-| `02_model_specification_priors.ipynb` | Model definitions, prior rationale and prior predictive checks |
-| `03_posterior_model1_normal.ipynb` | Posterior analysis of the Normal mean-time model |
-| `04_posterior_model2_student_t.ipynb` | Posterior analysis of the Student-t mean-time model |
-| `05_model_comparison.ipynb` | LOO/WAIC comparison for mean finish time models |
-| `06_winning_time_log_modeling.ipynb` | Log-scale Bayesian workflow for winning time |
-| `07_female_participation_modeling.ipynb` | Bayesian modelling of female participation counts |
-| `08_final_bayesian_project_report.ipynb` | Final condensed report combining the whole project |
-
----
-
-## Modelling Tasks
-
-## 1. Mean Finish Time
-
-Target:
-
-```text
-log_time = log(Mean Finish Time)
-```
-
-Two models are compared:
-
-| Model | Likelihood | Purpose |
-|---|---|---|
-| Model 1 | Normal | baseline log-time regression |
-| Model 2 | Student-t | robust log-time regression |
-
-The logarithmic transformation is used because finish time is positive and right-skewed. Back-transforming with `exp(...)` guarantees positive predicted times in hours.
-
----
-
-## 2. Winning Time
-
-Target:
-
-```text
-log_winning_time = log(Winning Time)
-```
-
-Two models are compared:
-
-| Model | Likelihood | Purpose |
-|---|---|---|
-| Model 3 | Normal | baseline log-winning-time regression |
-| Model 4 | Student-t | robust log-winning-time regression |
-
-The final winning-time workflow mirrors the mean-time workflow. Earlier original-scale winning-time models may exist in the repository as legacy files, but the final recommended approach is the log-scale version.
-
----
-
-## 3. Female Participation
-
-Target:
-
-```text
-N Women
-```
-
-The target is a bounded count:
-
-```text
-0 <= N Women <= N Participants
-```
-
-Therefore, the model is formulated conditionally on the total number of race participants:
-
-```text
-N Women_i | N Participants_i, p_i
-```
-
-Two models are compared:
-
-| Model | Likelihood | Purpose |
-|---|---|---|
-| Model 7A | Binomial | baseline bounded count model |
-| Model 7B | Beta-Binomial | overdispersed bounded count model |
-
-The Beta-Binomial model is included because race-level participation can vary more than expected under a simple Binomial model.
+The `idata_*.nc` files are optional caches. If they are absent, the notebooks fit the Stan models again.
 
 ---
 
 ## Feature Engineering
 
-All continuous predictors are transformed and standardized before modelling. This makes priors easier to specify and makes regression coefficients comparable.
+Continuous predictors are transformed and standardized before modelling. Standardization makes priors easier to define and makes regression coefficients comparable across predictors.
 
 ### Time models
 
-Predictors used for mean finish time and winning time:
+Used for **Mean Finish Time** and **Winning Time**:
 
-| Predictor | Construction | Reason |
+| Predictor | Construction | Purpose |
 |---|---|---|
-| `distance_log_std` | standardized `log(Distance)` | distance has a multiplicative effect on time |
-| `elevation_log_std` | standardized `log(Elevation Gain + 1)` | elevation gain is positive and skewed |
+| `distance_log_std` | standardized `log(Distance)` | captures multiplicative distance effects |
+| `elevation_log_std` | standardized `log1p(Elevation Gain)` | handles skewed positive elevation gain |
 | `steepness_std` | standardized `log1p(Elevation Gain / Distance)` | separates route steepness from total elevation |
-| `altitude_std` | standardized altitude or `log1p(Elevation)` | altitude can affect performance |
+| `altitude_std` | standardized `log1p(Elevation)` | captures altitude-related difficulty |
+
+For time models, the response is log-transformed:
+
+```text
+log_time = log(Mean Finish Time)
+log_winning_time = log(Winning Time)
+```
+
+Back-transformation is performed with:
+
+```text
+time = exp(log_time)
+winning_time = exp(log_winning_time)
+```
+
+This guarantees positive predictions on the original hour scale.
 
 ### Female participation model
 
-Additional predictors:
+The female participation model uses the same course-difficulty predictors and adds geography and year:
 
-| Predictor | Reason |
-|---|---|
-| `longitude_std` | captures broad geographical differences |
-| `latitude_std` | captures broad geographical differences |
-| `year_std` | captures time trend in female participation |
+| Predictor | Construction | Purpose |
+|---|---|---|
+| `distance_log_std` | standardized `log(Distance)` | course length effect |
+| `elevation_gain_log_std` | standardized `log1p(Elevation Gain)` | elevation gain effect |
+| `steepness_std` | standardized `log1p(Elevation Gain / Distance)` | steepness effect |
+| `altitude_std` | standardized `log1p(Elevation)` | altitude effect |
+| `longitude_std` | standardized longitude | broad geographic differences |
+| `latitude_std` | standardized latitude | broad geographic differences |
+| `year_std` | standardized year | temporal trend |
+
+The response is a bounded count:
+
+```text
+0 <= n_women <= n_participants
+female_share = n_women / n_participants
+```
 
 ---
 
 ## Model Specifications
 
-## Mean Finish Time: Model 1 and Model 2
+### Mean Finish Time: Model 1 and Model 2
 
-For race `i`:
+Target:
 
 ```text
 y_i = log(Mean Finish Time_i)
@@ -270,31 +261,34 @@ mu_i = alpha
      + beta_alt   * altitude_std_i
 ```
 
-Model 1:
+Model 1 — Normal likelihood:
 
 ```text
 y_i ~ Normal(mu_i, sigma)
 ```
 
-Model 2:
+Model 2 — Student-t likelihood:
 
 ```text
 y_i ~ Student_t(nu, mu_i, sigma)
 nu = 2 + nu_minus_two
 ```
 
-Predicted time in hours:
+Generated quantities include:
 
 ```text
+mu
 time_mu = exp(mu)
+log_time_rep
 time_rep = exp(log_time_rep)
+log_lik
 ```
 
 ---
 
-## Winning Time: Model 3 and Model 4
+### Winning Time: Model 3 and Model 4
 
-For race `i`:
+Target:
 
 ```text
 y_i = log(Winning Time_i)
@@ -310,36 +304,58 @@ mu_i = alpha
      + beta_alt   * altitude_std_i
 ```
 
-Model 3:
+Model 3 — Normal likelihood:
 
 ```text
 y_i ~ Normal(mu_i, sigma)
 ```
 
-Model 4:
+Model 4 — Student-t likelihood:
 
 ```text
 y_i ~ Student_t(nu, mu_i, sigma)
 nu = 2 + nu_minus_two
 ```
 
-Because the model is fitted on the log scale, each coefficient has a multiplicative interpretation after exponentiation:
+Generated quantities include:
 
 ```text
-exp(beta)
+mu
+winning_time_mu = exp(mu)
+log_winning_time_rep
+winning_time_rep = exp(log_winning_time_rep)
+log_lik
 ```
 
-This is the multiplicative change in predicted time for a one-standard-deviation increase in a predictor, holding the others fixed.
+Because the model is fitted on the log scale, exponentiating a coefficient gives a multiplicative interpretation:
+
+```text
+exp(beta_j)
+```
+
+Equivalently:
+
+```text
+(exp(beta_j) - 1) * 100%
+```
+
+is the approximate percentage change in expected time for a one-standard-deviation increase in a predictor, holding other predictors fixed.
 
 ---
 
-## Female Participation: Model 7A and Model 7B
+### Female Participation: Model 7 and Model 8
 
 Let:
 
 ```text
-Y_i = N Women_i
-N_i = N Participants_i
+Y_i = n_women_i
+N_i = n_participants_i
+```
+
+The model is conditional on the total number of participants:
+
+```text
+Y_i | N_i, p_i
 ```
 
 Linear predictor:
@@ -361,65 +377,84 @@ Probability of female participation:
 p_i = inv_logit(eta_i)
 ```
 
-Model 7A — Binomial:
+Model 7 — Binomial logistic regression:
 
 ```text
 Y_i ~ Binomial(N_i, p_i)
 ```
 
-Model 7B — Beta-Binomial:
+Model 8 — Beta-Binomial logistic regression:
 
 ```text
 Y_i ~ BetaBinomial(N_i, p_i * phi, (1 - p_i) * phi)
+phi = exp(log_phi)
 ```
 
-The parameter `phi` controls overdispersion. Large `phi` values make the Beta-Binomial behave similarly to the Binomial. Smaller `phi` values indicate stronger race-to-race heterogeneity.
+The Beta-Binomial model adds overdispersion. Large `phi` values make the model close to a Binomial model. Smaller `phi` values indicate stronger race-to-race heterogeneity in female participation.
 
 ---
 
 ## Prior Choices
 
-## Priors for time models
+### Priors for mean finish time models
 
-The time models use weakly informative priors on the log-time scale.
+The following priors match the current Stan files `model1_normal.stan` and `model2_student_t.stan`:
 
 | Parameter | Prior | Interpretation |
 |---|---|---|
-| `alpha` | `Normal(0, 1)` | weak intercept prior on log-hour scale |
-| `beta_dist` | `Normal(0.7, 0.4)` | strong positive effect of race distance |
-| `beta_elev` | `Normal(0.2, 0.3)` | positive but uncertain effect of elevation gain |
-| `beta_steep` | `Normal(0.15, 0.2)` | weak-to-moderate positive effect of steepness |
+| `alpha` | `Normal(2.0, 1.0)` | broad intercept prior on log-hour scale |
+| `beta_dist` | `Normal(0.7, 0.4)` | positive distance effect |
+| `beta_elev` | `Normal(0.2, 0.3)` | positive but uncertain elevation-gain effect |
+| `beta_steep` | `Normal(0.15, 0.2)` | weak-to-moderate positive steepness effect |
 | `beta_alt` | `Normal(0.05, 0.1)` | weak positive altitude effect |
-| `sigma` | `Normal(0, 0.3)` with `sigma > 0` | residual scale on log-time scale |
+| `sigma` | `Normal(0, 0.3)`, constrained `sigma > 0` | residual scale on log-time scale |
 | `nu_minus_two` | `Gamma(2, 0.1)` | Student-t tail parameter, with `nu > 2` |
 
-The priors encode plausible domain assumptions while remaining broad enough for the data to dominate.
+### Priors for winning time models
 
----
-
-## Priors for female participation models
-
-All predictors are standardized. Coefficients are interpreted as changes in log-odds per one-standard-deviation increase.
+The following priors match `model3_winning_log_normal.stan` and `model4_winning_log_student_t.stan`:
 
 | Parameter | Prior | Interpretation |
 |---|---|---|
-| `alpha` | `Normal(logit(0.25), 1)` | baseline female share around 25%, with broad uncertainty |
-| `beta_dist` | `Normal(-0.10, 0.35)` | longer races may reduce female share |
-| `beta_elev_gain` | `Normal(-0.05, 0.35)` | elevation difficulty may reduce female share |
-| `beta_steep` | `Normal(-0.05, 0.35)` | steepness effect uncertain, weakly negative |
-| `beta_alt` | `Normal(0, 0.25)` | weak environmental prior |
-| `beta_lon` | `Normal(0, 0.30)` | weak spatial prior |
-| `beta_lat` | `Normal(0, 0.30)` | weak spatial prior |
-| `beta_year` | `Normal(0.20, 0.25)` | female participation may increase over time |
-| `log_phi` | `Normal(log(50), 1)` | weak prior for overdispersion |
+| `alpha` | `Normal(0.0, 1.0)` | broad intercept prior on log winning-time scale |
+| `beta_dist` | `Normal(0.7, 0.4)` | positive distance effect |
+| `beta_elev` | `Normal(0.2, 0.3)` | positive but uncertain elevation-gain effect |
+| `beta_steep` | `Normal(0.15, 0.2)` | weak-to-moderate positive steepness effect |
+| `beta_alt` | `Normal(0.05, 0.1)` | weak positive altitude effect |
+| `sigma` | `Normal(0, 0.3)`, constrained `sigma > 0` | residual scale on log winning-time scale |
+| `nu_minus_two` | `Gamma(2, 0.1)` | Student-t tail parameter, with `nu > 2` |
 
-Prior predictive checks are used to verify that the priors generate plausible participation rates before conditioning on the observed data.
+The winning-time report includes prior predictive checks on both log and hour scales. Negative values on the log scale do **not** mean negative winning times; they correspond to positive winning times below one hour. If substantial prior predictive mass appears below one hour, the intercept prior should be reviewed.
+
+### Priors for female participation models
+
+The following priors match `model7_female_binomial.stan` and `model8_female_beta_binomial.stan`:
+
+| Parameter | Prior | Interpretation |
+|---|---|---|
+| `alpha` | `Normal(logit(0.25), 1.0)` | baseline female share around 25%, with broad uncertainty |
+| `beta_dist` | `Normal(-0.10, 0.35)` | longer races may reduce female share |
+| `beta_elev_gain` | `Normal(-0.05, 0.35)` | elevation gain effect weakly negative but uncertain |
+| `beta_steep` | `Normal(-0.05, 0.35)` | steepness effect weakly negative but uncertain |
+| `beta_alt` | `Normal(0.00, 0.25)` | weak altitude prior |
+| `beta_lon` | `Normal(0.00, 0.30)` | weak longitude/geography prior |
+| `beta_lat` | `Normal(0.00, 0.30)` | weak latitude/geography prior |
+| `beta_year` | `Normal(0.20, 0.25)` | positive prior for increasing female participation over time |
+| `log_phi` | `Normal(log(50), 1.0)` | overdispersion prior for Beta-Binomial model |
 
 ---
 
 ## Model Comparison Strategy
 
-Models are compared using:
+Models are compared within each task only:
+
+| Task | Compared models |
+|---|---|
+| Mean Finish Time | Model 1 Normal vs Model 2 Student-t |
+| Winning Time | Model 3 Normal vs Model 4 Student-t |
+| Female Participation | Model 7 Binomial vs Model 8 Beta-Binomial |
+
+The comparison uses:
 
 | Criterion | Meaning |
 |---|---|
@@ -427,52 +462,63 @@ Models are compared using:
 | WAIC | widely applicable information criterion |
 | ELPD | expected log predictive density; higher is better |
 | Pareto-k | reliability diagnostic for PSIS-LOO |
-| Posterior predictive checks | whether replicated data resemble observed data |
+| Posterior predictive checks | visual and numerical checks of replicated data |
 
-The comparison is made within each task only:
-
-- Mean Finish Time: Normal vs Student-t.
-- Winning Time: Normal vs Student-t.
-- Female Participation: Binomial vs Beta-Binomial.
+The preferred model should have better predictive performance, acceptable Pareto-k diagnostics and better posterior predictive behaviour.
 
 ---
 
 ## Main Results
 
-## Mean Finish Time
+The exact numerical values can vary slightly after rerunning MCMC. The summary below reflects the current project interpretation and the results recorded in the report materials.
 
-The mean-time workflow shows that the log-scale formulation is appropriate for positive, right-skewed race times. The Student-t likelihood is preferred over the Normal baseline because it handles atypical races and heavy-tailed residuals more robustly.
+### Mean Finish Time
 
-Main conclusion:
+The mean-time workflow supports modelling finish time on the log scale. The response is positive and right-skewed on the original hour scale, while the log transformation produces a more suitable regression target.
 
-> For average race finish time, the Student-t log-scale regression is preferred over the Normal log-scale regression.
+Main result:
 
----
+> **Model 2: Student-t log-scale regression** is preferred over the Normal baseline because it is more robust to atypical races and heavy-tailed residuals.
 
-## Winning Time
+The most important interpretation pattern is:
 
-The winning-time workflow also supports log-scale modelling. The raw `Winning Time` distribution is strongly right-skewed, while `log_winning_time` is substantially closer to symmetric.
+- distance is the dominant positive predictor of mean finish time;
+- elevation gain and steepness increase expected finish time;
+- altitude has a weaker effect after controlling for the other predictors;
+- Student-t residuals better handle outlying or unusual races.
 
-Key posterior and model-comparison results:
+### Winning Time
 
-| Quantity | Normal | Student-t |
+The winning-time workflow mirrors the mean-time workflow but uses:
+
+```text
+log_winning_time = log(Winning Time)
+```
+
+Representative model-comparison results recorded in the previous README/report materials:
+
+| Quantity | Model 3: Normal | Model 4: Student-t |
 |---|---:|---:|
 | ELPD LOO | 1394.78 | 1540.87 |
 | LOO model weight | 0.042 | 0.958 |
 | Max Pareto-k | 0.13 | 0.19 |
 | Residual scale `sigma` | approx. 0.183 | approx. 0.146 |
 
-The Student-t model improves predictive performance and estimates a smaller residual scale. Its degrees-of-freedom parameter indicates moderate heavy-tailed behaviour.
+Main result:
 
-Main conclusion:
+> **Model 4: Student-t log-scale regression** is preferred for winning time.
 
-> For winning time, the Student-t log-scale model is preferred. However, the longest `100M` races remain difficult to reproduce perfectly, suggesting that category-level or hierarchical effects would be a useful extension.
+The Student-t likelihood improves predictive performance and handles unusual races more robustly. The longest `100M` races can still be difficult to reproduce perfectly, suggesting that category-level or hierarchical effects would be useful extensions.
 
----
+### Female Participation
 
-## Female Participation
+Female participation is modelled as a bounded count, not as an unconstrained continuous variable. This is important because:
 
-Observed female participation decreases with race category distance:
+```text
+0 <= n_women <= n_participants
+```
+
+Observed female participation decreases with race category distance. Approximate category-level female shares recorded in the project materials are:
 
 | Race category | Approx. female share |
 |---|---:|
@@ -481,47 +527,167 @@ Observed female participation decreases with race category distance:
 | `100K` | 17.1% |
 | `100M` | 13.6% |
 
-Model comparison strongly favours the Beta-Binomial model:
+Representative model-comparison results recorded in the previous README/report materials:
 
-| Quantity | Binomial | Beta-Binomial |
+| Quantity | Model 7: Binomial | Model 8: Beta-Binomial |
 |---|---:|---:|
 | ELPD LOO | -36,294 | -18,565 |
 | LOO model weight | approx. 0.007 | approx. 0.993 |
 
-The Beta-Binomial model captures substantial overdispersion. Races with similar observed covariates can still have very different female participation rates.
+Main result:
 
-Main posterior conclusions from the preferred Beta-Binomial model:
+> **Model 8: Beta-Binomial logistic regression** is preferred for female participation.
+
+The Beta-Binomial model captures overdispersion: races with similar observed covariates can still have substantially different female participation rates.
+
+Main posterior interpretation:
 
 - distance has a strong negative effect on female participation odds;
-- steepness also has a negative effect;
+- steepness also tends to reduce female participation odds;
 - year has a positive effect, indicating increasing female participation over time;
 - altitude has no strong independent effect after controlling for distance, elevation, steepness, geography and year;
 - the overdispersion parameter confirms meaningful race-to-race heterogeneity.
 
-Main conclusion:
+---
 
-> For female participation, the Beta-Binomial logistic regression is preferred over the Binomial model.
+## Generated Outputs
+
+The final report notebooks generate figures and cached model objects.
+
+### Mean finish time report
+
+Default figure directory:
+
+```text
+report_figures/
+```
+
+Typical outputs:
+
+```text
+missing_values.png
+response_distributions.png
+predictor_preprocessing.png
+scatter_response_vs_predictors.png
+correlation_matrix.png
+model_diagram.png
+prior_distributions.png
+prior_predictive_*.png
+trace_model1.png
+trace_model2.png
+posterior_model1.png
+posterior_model2.png
+comparison_loo.png
+comparison_waic.png
+pareto_k_diagnostics.png
+joint_ppc_model1_model2.png
+```
+
+### Winning time report
+
+Default figure directory:
+
+```text
+report_figures_winning_time/
+```
+
+Typical outputs:
+
+```text
+winning_response_distributions.png
+winning_predictor_preprocessing.png
+winning_scatter_response_vs_predictors.png
+winning_correlation_matrix.png
+winning_model_diagram.png
+winning_prior_distributions.png
+winning_prior_predictive_*.png
+model3_winning_time_ppc.png
+model4_winning_time_ppc.png
+winning_time_joint_ppc_model3_model4.png
+winning_time_pareto_k_diagnostics.png
+winning_time_final_model_prediction.png
+```
+
+Cached model outputs:
+
+```text
+idata_winning_log_normal.nc
+idata_winning_log_student_t.nc
+```
+
+### Female participation report
+
+Default figure directory:
+
+```text
+report_figures_female_participation/
+```
+
+Typical outputs:
+
+```text
+female_response_distributions.png
+female_predictor_distributions.png
+female_share_vs_predictors.png
+female_correlation_matrix.png
+female_model_diagram.png
+female_prior_distributions.png
+female_prior_predictive_*.png
+trace_binomial.png
+trace_beta_binomial.png
+posterior_odds_ratio_comparison.png
+ppc_weighted_share.png
+ppc_ecdf_binomial.png
+ppc_ecdf_beta_binomial.png
+ppc_by_category.png
+comparison_loo.png
+comparison_waic.png
+comparison_pareto_k.png
+final_model_distance_effect.png
+final_model_year_effect.png
+```
+
+Cached model outputs:
+
+```text
+idata_female_binomial.nc
+idata_female_beta_binomial.nc
+```
 
 ---
 
 ## How to Run
 
-Run the notebooks in the following order:
+Recommended order:
 
 ```text
-01_problem_formulation.ipynb
-02_model_specification_priors.ipynb
-03_posterior_model1_normal.ipynb
-04_posterior_model2_student_t.ipynb
-05_model_comparison.ipynb
-06_winning_time_log_modeling.ipynb
-07_female_participation_modeling.ipynb
-08_final_bayesian_project_report.ipynb
+1. final_bayesian_utmb_report_katex_fixed.ipynb
+2. final_bayesian_utmb_winning_time_report_text_fixed.ipynb
+3. final_bayesian_utmb_female_participation_report.ipynb
 ```
 
-The first notebook creates or refreshes `utmb_processed.csv`. Downstream notebooks assume that the processed dataset is available in the repository root.
+The notebooks are designed to be run from the repository root.
 
-The final notebook `08_final_bayesian_project_report.ipynb` is a compact report notebook. It documents the complete modelling workflow and summarizes the final results without repeating all expensive MCMC sampling.
+Place the raw dataset in the repository root or in a `data/` directory:
+
+```text
+utmb-race-data-sheet.csv
+```
+
+The notebooks can also use processed files if they exist:
+
+```text
+utmb_processed.csv
+utmb_female_participation_processed.csv
+```
+
+The final notebooks use a subset for posterior fitting by default:
+
+```text
+MODEL_SAMPLE_N = 5000
+```
+
+This keeps generated quantities, posterior predictive arrays and pointwise log-likelihood matrices manageable.
 
 ---
 
@@ -532,7 +698,6 @@ The final notebook `08_final_bayesian_project_report.ipynb` is a compact report 
 ```bash
 git clone https://github.com/TomaszBryndza/utmb_race_finish_times_bayesian_analysis.git
 cd utmb_race_finish_times_bayesian_analysis
-git checkout unified_log_model
 ```
 
 ### 2. Create a Python environment
@@ -552,7 +717,7 @@ conda create -n utmb-bayes python=3.11 -y
 conda activate utmb-bayes
 ```
 
-### 3. Install dependencies
+### 3. Install Python dependencies
 
 ```bash
 pip install numpy pandas scipy matplotlib arviz cmdstanpy kagglehub jupyter ipykernel ipywidgets tqdm
@@ -564,7 +729,7 @@ pip install numpy pandas scipy matplotlib arviz cmdstanpy kagglehub jupyter ipyk
 python -m cmdstanpy.install_cmdstan
 ```
 
-CmdStan requires a working C++ toolchain. On Linux/macOS, make sure `make` and a C++ compiler are installed. On Windows, a compatible CmdStan toolchain is required.
+CmdStan requires a working C++ toolchain.
 
 ### 5. Register a Jupyter kernel
 
@@ -586,43 +751,77 @@ jupyter notebook
 
 ---
 
-## Generated Figures
+## Reproducibility Notes
 
-The project uses figures to answer specific modelling questions, not just to decorate the notebook.
-
-Important plot types:
-
-| Plot type | Purpose |
-|---|---|
-| Target distribution before/after log transform | check whether log-scale modelling is justified |
-| Predictor-target scatterplots | inspect relationships and nonlinearity |
-| Prior predictive plots | validate priors before seeing the data |
-| Trace plots | check MCMC mixing and convergence |
-| Posterior density/HDI plots | interpret parameter uncertainty |
-| Posterior predictive checks | verify whether simulated data resemble observed data |
-| Grouped PPC by race category | check category-level calibration |
-| LOO/WAIC comparison plots | compare predictive performance |
-| Pareto-k plots | evaluate reliability of PSIS-LOO |
-
-Typical generated figure patterns:
-
-```text
-fig*.png
-fig_wt_*.png
-fig_female_*.png
-plot*.png
-```
+- The notebooks set fixed random seeds, but MCMC results can still vary slightly across machines and package versions.
+- Some reports use random subsampling for computational feasibility.
+- Stan models may be recompiled automatically depending on the local CmdStan version.
+- Expensive posterior objects should be cached as ArviZ NetCDF files.
+- If preprocessing changes, rerun all downstream reports.
+- Model comparison should always be based on pointwise `log_lik` generated in Stan.
+- Posterior predictive checks should be interpreted alongside LOO/WAIC, not replaced by them.
 
 ---
 
-## Reproducibility Notes
+## Troubleshooting Notes
 
-- Some fitting notebooks may use a random subsample for computational feasibility because generated quantities can be memory-heavy for tens of thousands of observations.
-- MCMC results may vary slightly across machines and package versions.
-- Stan models may be recompiled automatically depending on the local CmdStan version.
-- Notebooks should be run from the repository root to keep relative paths valid.
-- If feature engineering in notebook `01` changes, all downstream notebooks should be rerun.
-- For better long-term reproducibility, posterior objects should be saved as ArviZ `InferenceData` files, for example in NetCDF format.
+### Negative values on log-scale plots
+
+Negative values on axes such as:
+
+```text
+log(Winning Time [hours])
+```
+
+are not negative times. They correspond to positive times below one hour. For example:
+
+```text
+log(0.5) = -0.693
+```
+
+However, if a prior predictive check assigns substantial probability to winning times below one hour for ultra-trail races, the intercept prior should be reviewed.
+
+### ArviZ posterior predictive dimensions
+
+ArviZ expects posterior predictive arrays in the shape:
+
+```text
+chain x draw x observation
+```
+
+If an array has shape:
+
+```text
+draw x observation
+```
+
+add a fake chain dimension before creating an `InferenceData` object:
+
+```python
+time_rep = time_rep[None, :, :]
+```
+
+### Matplotlib `tight_layout` and colorbar issue
+
+If `plt.tight_layout()` fails after creating a colorbar, use manual spacing instead:
+
+```python
+fig.subplots_adjust(left=0.25, bottom=0.30, right=0.88, top=0.90)
+```
+
+or create the figure with `constrained_layout=True` before adding axes.
+
+### KaTeX / Markdown rendering
+
+For markdown equations in notebooks, prefer:
+
+```text
+$$
+...
+$$
+```
+
+instead of `\[ ... \]` when the notebook renderer has KaTeX compatibility issues.
 
 ---
 
@@ -631,25 +830,35 @@ plot*.png
 Main limitations:
 
 - the analysis uses race-level aggregated data, not individual runner-level data;
-- weather, technical terrain, aid-station structure and race-day conditions are not included;
-- predictors such as distance, elevation gain and steepness are correlated, so individual coefficients require careful interpretation;
-- current models do not include hierarchical effects for race category, event or country;
-- some posterior inference steps use subsampling for computational reasons.
+- weather, trail technicality, surface type and race-day conditions are not included;
+- predictors such as distance, elevation gain and steepness are correlated;
+- current models do not include hierarchical effects for race category, country or event family;
+- some posterior inference uses subsampling for computational reasons;
+- prior choices should be periodically rechecked with prior predictive simulations.
 
 Recommended future extensions:
 
 1. Add varying intercepts by `Race Category`.
 2. Add varying intercepts by `Country` or event family.
 3. Add nonlinear effects using splines or Gaussian processes.
-4. Include weather and terrain technicality variables if available.
-5. For female participation, include category-level effects explicitly.
+4. Include weather, terrain technicality and aid-station structure if available.
+5. Add category-level effects explicitly to female participation models.
 6. Save all fitted models as ArviZ `InferenceData` objects.
-7. Refactor the repository into `notebooks/`, `models/`, `data/`, `figures/` and `outputs/` folders.
+7. Refactor the repository into `data/`, `models/`, `notebooks/`, `figures/` and `outputs/` folders.
+8. Compare models using out-of-sample validation on held-out races or years.
 
 ---
 
 ## Final Project Conclusion
 
-The project shows that Bayesian modelling is well suited for UTMB race-level analysis. Log-scale Student-t regression is the preferred approach for both mean finish time and winning time, while Beta-Binomial logistic regression is the preferred approach for female participation counts.
+Bayesian modelling is well suited for UTMB race-level analysis because it combines interpretable assumptions, uncertainty quantification and predictive checking.
 
-Across all tasks, the key statistical lesson is that the likelihood matters. Matching the likelihood to the data type — positive continuous time, heavy-tailed residuals or bounded counts — leads to more realistic uncertainty, better posterior predictive behaviour and stronger out-of-sample performance.
+Across the three modelling tasks:
+
+| Task | Preferred model | Reason |
+|---|---|---|
+| Mean Finish Time | Model 2: Student-t log regression | robust to heavy-tailed residuals and atypical races |
+| Winning Time | Model 4: Student-t log regression | better predictive performance than Normal baseline |
+| Female Participation | Model 8: Beta-Binomial logistic regression | captures overdispersion in bounded participation counts |
+
+The key statistical lesson is that the likelihood matters. Matching the likelihood to the response type — positive continuous time, heavy-tailed log-time residuals or bounded counts — leads to more realistic uncertainty, better posterior predictive behaviour and stronger out-of-sample predictive performance.
