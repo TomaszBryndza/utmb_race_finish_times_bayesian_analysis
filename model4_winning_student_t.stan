@@ -1,43 +1,65 @@
-// Model 4: Student-t Linear Regression for Winning Time (Robust)
-// y ~ Student_t(nu, mu, sigma)
-// mu = alpha + beta_dist * distance_std + beta_elev * elevation_std
-// The Student-t likelihood is more robust to outlier races
+// Model 4: Student-t Linear Regression on LOG Winning Time (robust)
+//
+// log(WT_i) ~ Student_t(nu, mu_i, sigma)
 
 data {
   int<lower=1> N;
-  vector[N] y;              // winning time in hours
-  vector[N] distance_std;   // standardized distance
-  vector[N] elevation_std;  // standardized elevation gain
+  vector[N] log_winning_time;
+  vector[N] distance_log_std;
+  vector[N] elevation_log_std;
+  vector[N] steepness_std;
+  vector[N] altitude_std;
 }
 
 parameters {
-  real alpha;               // intercept
-  real beta_dist;           // effect of distance
-  real beta_elev;           // effect of elevation gain
-  real<lower=0.01> sigma;   // scale parameter
-  real<lower=1> nu;         // degrees of freedom (controls tail heaviness)
+  real alpha;
+  real beta_dist;
+  real beta_elev;
+  real beta_steep;
+  real beta_alt;
+  real<lower=0> sigma;
+  real<lower=0> nu_minus_two;
+}
+
+transformed parameters {
+  real<lower=2> nu = 2 + nu_minus_two;
 }
 
 model {
-  // Priors
-  alpha ~ normal(7, 4);            // average winning time ~7h
-  beta_dist ~ normal(4, 2);       // longer distance -> longer winning time
-  beta_elev ~ normal(1.5, 1.5);   // more elevation -> longer winning time
-  sigma ~ exponential(0.3);        // scale parameter, mean ~3.3h
-  nu ~ gamma(2, 0.1);             // degrees of freedom, allows heavy tails
+  vector[N] mu = alpha
+    + beta_dist  * distance_log_std
+    + beta_elev  * elevation_log_std
+    + beta_steep * steepness_std
+    + beta_alt   * altitude_std;
 
-  // Likelihood (Student-t for robustness against outliers)
-  y ~ student_t(nu, alpha + beta_dist * distance_std + beta_elev * elevation_std, sigma);
+  alpha        ~ normal(2.0, 1.0);
+  beta_dist    ~ normal(0.7, 0.4);
+  beta_elev    ~ normal(0.2, 0.3);
+  beta_steep   ~ normal(0.15, 0.2);
+  beta_alt     ~ normal(0.05, 0.1);
+  sigma        ~ normal(0, 0.3);
+  nu_minus_two ~ gamma(2, 0.1);
+
+  log_winning_time ~ student_t(nu, mu, sigma);
 }
 
 generated quantities {
-  vector[N] y_rep;
-  vector[N] log_lik;
   vector[N] mu;
+  vector[N] log_winning_time_rep;
+  vector[N] winning_time_rep;
+  vector[N] winning_time_mu;
+  vector[N] log_lik;
 
   for (i in 1:N) {
-    mu[i] = alpha + beta_dist * distance_std[i] + beta_elev * elevation_std[i];
-    y_rep[i] = student_t_rng(nu, mu[i], sigma);
-    log_lik[i] = student_t_lpdf(y[i] | nu, mu[i], sigma);
+    mu[i] = alpha
+      + beta_dist  * distance_log_std[i]
+      + beta_elev  * elevation_log_std[i]
+      + beta_steep * steepness_std[i]
+      + beta_alt   * altitude_std[i];
+
+    log_winning_time_rep[i] = student_t_rng(nu, mu[i], sigma);
+    winning_time_rep[i] = exp(log_winning_time_rep[i]);
+    winning_time_mu[i] = exp(mu[i]);
+    log_lik[i] = student_t_lpdf(log_winning_time[i] | nu, mu[i], sigma);
   }
 }

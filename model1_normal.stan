@@ -64,7 +64,7 @@ model {
                + beta_steep * steepness_std
                + beta_alt   * altitude_std;
 
-  alpha      ~ normal(0,    1.0);
+  alpha      ~ normal(2.0,    1.0);
   beta_dist  ~ normal(0.7,  0.4);
   beta_elev  ~ normal(0.2,  0.3);
   beta_steep ~ normal(0.15, 0.2);

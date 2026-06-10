@@ -1,40 +1,64 @@
-// Model 3: Normal Linear Regression for Winning Time
-// y ~ Normal(mu, sigma)
-// mu = alpha + beta_dist * distance_std + beta_elev * elevation_std
+// Model 3: Normal Linear Regression on LOG Winning Time
+//
+// log(WT_i) ~ Normal(mu_i, sigma)
+// mu_i = alpha
+//      + beta_dist  * distance_log_std_i
+//      + beta_elev  * elevation_log_std_i
+//      + beta_steep * steepness_std_i
+//      + beta_alt   * altitude_std_i
 
 data {
   int<lower=1> N;
-  vector[N] y;              // winning time in hours
-  vector[N] distance_std;   // standardized distance
-  vector[N] elevation_std;  // standardized elevation gain
+  vector[N] log_winning_time;
+  vector[N] distance_log_std;
+  vector[N] elevation_log_std;
+  vector[N] steepness_std;
+  vector[N] altitude_std;
 }
 
 parameters {
-  real alpha;               // intercept (winning time at average distance/elevation)
-  real beta_dist;           // effect of distance
-  real beta_elev;           // effect of elevation gain
-  real<lower=0> sigma;      // residual standard deviation
+  real alpha;
+  real beta_dist;
+  real beta_elev;
+  real beta_steep;
+  real beta_alt;
+  real<lower=0> sigma;
 }
 
 model {
-  // Priors
-  alpha ~ normal(7, 4);            // average winning time ~7h, weakly informative
-  beta_dist ~ normal(4, 2);       // longer distance -> longer winning time
-  beta_elev ~ normal(1.5, 1.5);   // more elevation -> longer winning time
-  sigma ~ exponential(0.3);        // residual SD, mean ~3.3h
+  vector[N] mu = alpha
+    + beta_dist  * distance_log_std
+    + beta_elev  * elevation_log_std
+    + beta_steep * steepness_std
+    + beta_alt   * altitude_std;
 
-  // Likelihood
-  y ~ normal(alpha + beta_dist * distance_std + beta_elev * elevation_std, sigma);
+  alpha      ~ normal(0, 1.0);
+  beta_dist  ~ normal(0.7, 0.4);
+  beta_elev  ~ normal(0.2, 0.3);
+  beta_steep ~ normal(0.15, 0.2);
+  beta_alt   ~ normal(0.05, 0.1);
+  sigma      ~ normal(0, 0.3);
+
+  log_winning_time ~ normal(mu, sigma);
 }
 
 generated quantities {
-  vector[N] y_rep;
-  vector[N] log_lik;
   vector[N] mu;
+  vector[N] log_winning_time_rep;
+  vector[N] winning_time_rep;
+  vector[N] winning_time_mu;
+  vector[N] log_lik;
 
   for (i in 1:N) {
-    mu[i] = alpha + beta_dist * distance_std[i] + beta_elev * elevation_std[i];
-    y_rep[i] = normal_rng(mu[i], sigma);
-    log_lik[i] = normal_lpdf(y[i] | mu[i], sigma);
+    mu[i] = alpha
+      + beta_dist  * distance_log_std[i]
+      + beta_elev  * elevation_log_std[i]
+      + beta_steep * steepness_std[i]
+      + beta_alt   * altitude_std[i];
+
+    log_winning_time_rep = normal_rng(mu[i], sigma);
+    winning_time_rep[i] = exp(log_winning_time_rep[i]);
+    winning_time_mu[i] = exp(mu[i]);
+    log_lik[i] = normal_lpdf(log_winning_time[i] | mu[i], sigma);
   }
 }
