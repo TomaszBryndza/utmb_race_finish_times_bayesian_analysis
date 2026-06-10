@@ -1,0 +1,19 @@
+Mean Finish Time and Winning Time are continuous, positive, real-valued data (e.g., 7.34 hours, 12.81 hours). They are NOT counts.
+
+Poisson / Negative Binomial are for count data (integers: 0, 1, 2, 3...) — things like "number of accidents", "number of publications", "number of DNFs". They have discrete support.
+
+Normal / Student-t are for continuous data — things like duration, temperature, speed. Our finish times are continuous values measured in decimal hours.
+
+From the data exploration:
+
+Mean Finish Time: mean = 10.62h, range [0.87h, 76.73h], continuous
+Skewness = 1.99, Kurtosis = 4.94 (heavy right tail)
+The Normal is the natural baseline for continuous regression. The Student-t adds heavier tails to handle the outlier races (kurtosis ≈ 5 confirms this).
+
+If we were modeling something like "number of DNFs per race" or "number of participants", then Poisson/NegBin would be appropriate. But for a continuous duration variable, they're not applicable — you can't have a Poisson likelihood produce a value of 7.34 hours.
+
+Alternative continuous models we could have considered:
+
+Gamma / Log-Normal — for strictly positive, right-skewed data (would avoid predicting negative times)
+Exponential — for time-to-event, but too restrictive (memoryless)
+The Normal vs Student-t pair was chosen because it directly maps to the lab 7 framework (model comparison on the same structure), clearly demonstrates the effect of outliers, and the Student-t nests the Normal (when ν→∞). If you'd prefer, I can replace one model with a Log-Normal regression which would be a more "structurally different" alternative (guaranteeing positive predictions and naturally handling the right skew). Want me to do that?
